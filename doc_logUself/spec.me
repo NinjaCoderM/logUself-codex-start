@@ -10,6 +10,8 @@ Die Anwendung unterstützt die persönliche Nutzung alleine oder gemeinsam als F
 
 Die Anwendung muss über einen Laptop(Electron) und ein iPhone(Webseite) nutzbar sein. Die Daten werden zwischen beiden Geräten synchronisiert.
 
+logUself dient außerdem als generische Datenplattform für externe Anwendungen wie chip-pippin und bau-codex-desk. Es stellt Datenhaltung, API sowie Oberflächen zur Erfassung, Anzeige und Korrektur bereit. Die anwendungsspezifische fachliche Logik verbleibt in der jeweiligen externen Anwendung.
+
 ## 2. Technische Rahmenbedingungen
 
 - Responsive Webanwendung als Progressive Web App (PWA).
@@ -48,7 +50,7 @@ Die Eintragstypen sind dynamisch und können vom Benutzer angelegt und umbenannt
 - Quality Time
 - Brain Rot Time
 
-Jeder Ticket-Datensatz gehört genau einem Eintragstyp.
+Jeder Eintrag gehört genau einem Eintragstyp und einem Projekt. Ein Ticket ist ein aufgabenbezogener Eintrag mit dem in FR-02 beschriebenen Statusmodell. Andere typisierte Einträge, beispielsweise ein Mitarbeiter, können ohne Ticket existieren und benötigen keinen Aufgabenstatus.
 
 Ein Eintragstyp definiert die typspezifische Datenstruktur: Feldnamen, Datentypen, Pflichtfelder und Validierungsregeln. Benutzer können diese Felder bei der Definition eines Eintragstyps festlegen. Die typspezifischen Felder ergänzen die gemeinsamen Grundfelder eines Tickets. Beispielsweise definiert der Eintragstyp Sport Felder für Sportart, Dauer und optionale Distanz; der Eintragstyp Ernährung definiert Felder für Kalorien, Mahlzeitenart und Bewertung. Die folgenden fachlichen Anforderungen beschreiben die vorgesehenen Datenfelder und Regeln für die jeweiligen Beispieltypen.
 
@@ -56,9 +58,13 @@ Für auswertbare numerische Felder legt die Eintragstypdefinition zusätzlich di
 
 Eintragstypen bestimmen keine Zugriffsrechte. Diese werden über das zugehörige Projekt festgelegt. Eine zusätzliche Kategorieebene ist zunächst nicht vorgesehen.
 
+Eintragstypdefinitionen unterstützen auch untergeordnete Datensätze und wiederholbare Feldgruppen. So kann ein Mitarbeitereintrag mehrere Arbeitstage enthalten und jeder Arbeitstag mehrere Pausen. Untergeordnete Datensätze besitzen stabile IDs und übernehmen die Projektzuordnung und Zugriffsrechte ihres übergeordneten Eintrags. Eltern-Kind-Beziehungen werden relational abgesichert; dynamische Werte und wiederholbare Feldgruppen können gemäß Abschnitt 2.1 in JSONB gespeichert werden.
+
+Die Typdefinition kann generische Erfassungsaktionen mit Bezeichnung und zugehöriger Datenstruktur vorgeben: beim Typ Mitarbeiter beispielsweise „Tag hinzufügen“, bei anderen Typen „Zeiten erfassen“. logUself stellt dafür passende Formulare und API-Operationen bereit. Diese Konfiguration enthält keinen frei ausführbaren Programmcode und verlagert keine externe Geschäftslogik nach logUself.
+
 ### FR-01a: Projekte, Mitgliedschaften und Sichtbarkeit
 
-Ein Projekt bündelt Tickets und besitzt mindestens:
+Ein Projekt bündelt typisierte Einträge einschließlich Tickets und besitzt mindestens:
 - Eindeutige ID
 - Frei wählbaren Namen
 - Eigentümer
@@ -106,6 +112,8 @@ Eine Zeitbuchung enthält:
 - Beschreibung
 
 Zeitbuchungen können bearbeitet und gelöscht werden. Die Dauer muss positiv sein. Die Anwendung zeigt Summen pro Tag, Kalenderwoche und Ticket an.
+
+Diese Dauerpflicht gilt für die hier beschriebenen Dauerbuchungen, nicht für die schrittweise ergänzten Arbeitstage nach FR-12. Ein Arbeitstag ist keine zusätzliche Dauerbuchung und wird nicht automatisch ein zweites Mal als Zeitaufwand gezählt.
 
 ### FR-04: Sportaktivitäten Zeitbuchung Zusatz
 
@@ -185,6 +193,33 @@ Nach erfolgreicher Authentifizierung kann der Benutzer auf Laptop und iPhone auf
 - Zeitbuchungen und historische Daten bleiben bei Abschluss eines Tickets erhalten.
 - Export der eigenen Daten wird als spätere Erweiterung vorgesehen.
 
+### FR-12: Datenabbildung für chip-pippin und bau-codex-desk
+
+chip-pippin ist ein eigenständiges externes Softwareprojekt mit eigener fachlicher Logik. Es ist nicht mit einem gleichnamigen Projekt innerhalb von logUself gleichzusetzen.
+
+Über authentifizierte und autorisierte API-Requests kann chip-pippin in logUself prüfen, ob das Projekt „Zeiterfassung“, die benötigte Eintragstypdefinition „Mitarbeiter“ und der jeweilige Mitarbeitereintrag, beispielsweise „John Doe“, vorhanden sind. Fehlende Objekte werden über die API erstellt. Die Wiedererkennung erfolgt über stabile technische beziehungsweise externe Schlüssel im berechtigten Bereich, nicht allein über Anzeigenamen. Wiederholte Einrichtungsrequests dürfen keine Duplikate erzeugen.
+
+Das Datenmodell lautet: Projekt „Zeiterfassung“ → Eintrag vom Typ „Mitarbeiter“ → Arbeitstage → mehrere Pausen je Arbeitstag. Der Mitarbeitereintrag repräsentiert die Person und ist unabhängig von einem Ticket. Ein Mitarbeiter benötigt dafür nicht zwingend ein eigenes logUself-Benutzerkonto.
+
+Über „Tag hinzufügen“ wird unter dem Mitarbeiter ein Arbeitstag mit folgenden Daten angelegt:
+- Eindeutige ID und Datum
+- Arbeitsbeginn als Zeitpunkt
+- Optionales Arbeitsende als Zeitpunkt
+- Beliebig viele Pausen mit jeweils stabiler ID, Beginn und optionalem Ende als Zeitpunkte
+
+Zeitpunkte enthalten Datum und Uhrzeit mit eindeutiger Zeitzoneninformation; die Anzeige erfolgt in Europe/Vienna. Der Datensatz wird fortlaufend ergänzt:
+1. Kommen speichert zunächst nur den Arbeitsbeginn.
+2. Pausenbeginn fügt eine neue Pause mit Beginn hinzu.
+3. Pausenende ergänzt das Ende dieser Pause.
+4. Weitere Pausen werden als weitere Pausenpaare angelegt.
+5. Gehen ergänzt das Arbeitsende.
+
+Fehlendes Arbeitsende und offene Pausen sind zulässige Zwischenstände und dürfen die Speicherung nicht verhindern. logUself zeigt diese Zustände an und prüft die in der Datenstruktur definierten Datentypen und Regeln. Eine positive, bereits berechnete Dauer ist für einen solchen Zwischenstand nicht erforderlich.
+
+Berechtigte Benutzer können dieselben Daten in logUself ergänzen und korrigieren. chip-pippin und bau-codex-desk können den aktuellen gespeicherten Stand über die API abrufen. Teilaktualisierungen müssen andere bereits gespeicherte Angaben erhalten; gleichzeitige Änderungen dürfen nicht stillschweigend überschrieben werden und müssen über Versionsprüfung als Konflikt erkennbar sein.
+
+Berechnung der Nettoarbeitszeit, fachliche Vollständigkeitsprüfungen und der Vergleich mit auf Arbeitsprojekte gebuchten Zeiten erfolgen in chip-pippin beziehungsweise der zuständigen externen Anwendung. logUself führt diese Logik nicht aufgrund eines Projekt- oder Typnamens aus. Allgemeine Summen und Durchschnitte nach FR-09 bleiben verfügbar; externe Berechnungsergebnisse werden dort nur berücksichtigt, wenn sie ausdrücklich als auswertbare Werte bereitgestellt und definiert sind. Anwesenheitszeit und Projektzeitzuordnungen werden nicht zu einer gemeinsamen Gesamtarbeitszeit addiert.
+
 ## 4. Nichtfunktionale Anforderungen
 
 - Bedienbar auf aktuellen Desktop- und mobilen Browsern.
@@ -211,6 +246,9 @@ Nach erfolgreicher Authentifizierung kann der Benutzer auf Laptop und iPhone auf
 13. Ein Benutzer kann einen Eintragstyp mit typspezifischen Feldern definieren. Bei der Erfassung werden die festgelegten Datentypen, Pflichtfelder und Validierungsregeln geprüft.
 14. Ein neu angelegter Eintragstyp erscheint ohne Programmänderung im Wochenbericht. Zwei Buchungen mit 30 und 45 Minuten ergeben für dessen Zeitfeld 75 Minuten; eine Umbenennung des Typs verändert das Ergebnis nicht.
 15. Für ein Bewertungsfeld mit der Skala 1 bis 5 ergeben die Werte 3 und 5 sowie eine fehlende Bewertung den Durchschnitt 4,0 aus 2 Bewertungen. Ohne Bewertungen wird „Keine Daten“ angezeigt.
+16. chip-pippin kann Projekt „Zeiterfassung“, Eintragstyp „Mitarbeiter“ und Mitarbeitereintrag per API bei Bedarf erstellen; wiederholte Einrichtung erzeugt keine Duplikate.
+17. Für einen Mitarbeiter kann ohne Ticket ein Arbeitstag zunächst nur mit Arbeitsbeginn gespeichert werden. Anschließend lassen sich zwei Pausen jeweils schrittweise um Beginn und Ende sowie zuletzt das Arbeitsende ergänzen, ohne vorhandene Daten zu verlieren.
+18. Eine berechtigte manuelle Korrektur in logUself ist beim nächsten API-Abruf durch die externe Anwendung sichtbar. Ein Update auf Basis einer veralteten Version wird als Konflikt zurückgewiesen.
 
 ## 6. Bewusst nicht in Version 1 enthalten
 
@@ -240,10 +278,8 @@ Synchronisation	Lokale Outbox, Wiederholungslogik und Serverbestätigung
 IndexedDB ist dabei für strukturierte lokale Daten geeigneter als localStorage. Die PWA kann die Anwendungsdateien offline bereitstellen; IndexedDB speichert die Daten und ausstehenden Änderungen. Die Synchronisation sollte zusätzlich einen expliziten Mechanismus zum erneuten Versuch und einen sichtbaren Synchronisationsstatus besitzen. Auf automatische Hintergrundsynchronisation allein würde ich mich nicht verlassen, da sie je nach Browser und Betriebssystem eingeschränkt sein kann.
 ----
 Bitte folgendes integrieren
-logUself soll nicht bloß als Anzeige für bau-codex verwenden, sondern als zentrale Datenplattform, über die Daten erfasst, ergänzt, geprüft und korrigiert werden.
-Dein Beispiel mit fehlenden Beginn- und Endzeiten macht den Nutzen deutlich: bau-codex erfasst die fachlichen Daten einer Baustelle. logUself erkennt, dass bei einem Mitarbeiter ein Zeiteintrag unvollständig ist. Ein berechtigter Benutzer ergänzt die fehlende Zeit in logUself. Anschließend steht die korrigierte Information auch bau-codex zur Verfügung.
-Du möchtest damit vermeiden, dass du für jede Ausnahme einen eigenen Bildschirm und jede Korrekturfunktion direkt in bau-codex implementieren musst.
+Die Datenplattform-Funktion für chip-pippin und bau-codex-desk ist in FR-12 beschrieben. logUself stellt generische Erfassungs- und Korrekturoberflächen bereit; die fachliche Erkennung und Bewertung unvollständiger Mitarbeiterzeiten verbleibt in der externen Anwendung.
 ----
 Bitte folgendes integrieren
 -Alle Daten über Request abfragbar ,auch mit Abfragesprache ähnliche wie SQL oder Jira JQL oder über URL mit ID auch wie bei Jira
--Schnittstellen zu Chip-Pippin (Projekt AN Chip Kommen Gehen Pause) -> Anmeldung/Abmeldung/Pause mit Chip Pippin in logUself
+-Die Schnittstelle zu chip-pippin für Kommen, Gehen und mehrere Pausen ist in FR-12 beschrieben.
