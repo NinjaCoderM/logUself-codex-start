@@ -6,7 +6,7 @@
 
 ## 1. Zielsetzung
 
-Die Anwendung unterstützt eine Person dabei, persönliche Projekte zu organisieren, Zeitaufwände zu dokumentieren, Sportaktivitäten zu erfassen und die eigene Ernährung zu beobachten.
+Die Anwendung unterstützt die persönliche Nutzung alleine oder gemeinsam als Familie. Benutzer können Projekte organisieren, Zeitaufwände dokumentieren, Sportaktivitäten erfassen und die eigene Ernährung beobachten. Private und gemeinsam genutzte Projekte verwenden dasselbe Grundkonzept. Dieses Grundkonzept soll auch für Unternehmensprojekte nutzbar sein; unternehmensspezifische Aufgaben und Regeln werden gesondert spezifiziert.
 
 Die Anwendung muss über einen Laptop(Electron) und ein iPhone(Webseite) nutzbar sein. Die Daten werden zwischen beiden Geräten synchronisiert.
 
@@ -19,21 +19,45 @@ Die Anwendung muss über einen Laptop(Electron) und ein iPhone(Webseite) nutzbar
 - Local über Docker Desktop
 - Zeitzone: Europe/Vienna.
 - Sprache der Benutzeroberfläche: Deutsch.
-- Einzelbenutzeranwendung; Authentifizierung und Zugriffsschutz sind vorzusehen.
+- Mehrbenutzerfähige Anwendung, die auch alleine genutzt werden kann; Authentifizierung und projektbezogener Zugriffsschutz sind vorzusehen.
 - OpenAPI für Rest Schnittstellen
 
 ## 3. Funktionale Anforderungen
 
-### FR-01: Kategorien
+### FR-01: Eintragstypen und Datenstruktur
 
-Die Anwendung bietet die Hauptkategorien:
+Die Eintragstypen sind dynamisch und können vom Benutzer angelegt und umbenannt werden. Die folgende Auflistung zeigt Beispiele möglicher Eintragstypen und ist keine fest vorgegebene oder abschließende Auswahl:
 - Lernen
 - Sport
 - Ernährung
 - Quality Time
 - Brain Rot Time
 
-Jeder Ticket-Datensatz gehört zu einer Hauptkategorie.
+Jeder Ticket-Datensatz gehört genau einem Eintragstyp.
+
+Ein Eintragstyp definiert die typspezifische Datenstruktur: Feldnamen, Datentypen, Pflichtfelder und Validierungsregeln. Benutzer können diese Felder bei der Definition eines Eintragstyps festlegen. Die typspezifischen Felder ergänzen die gemeinsamen Grundfelder eines Tickets. Beispielsweise definiert der Eintragstyp Sport Felder für Sportart, Dauer und optionale Distanz; der Eintragstyp Ernährung definiert Felder für Kalorien, Mahlzeitenart und Bewertung. Die folgenden fachlichen Anforderungen beschreiben die vorgesehenen Datenfelder und Regeln für die jeweiligen Beispieltypen.
+
+Eintragstypen bestimmen keine Zugriffsrechte. Diese werden über das zugehörige Projekt festgelegt. Eine zusätzliche Kategorieebene ist zunächst nicht vorgesehen.
+
+### FR-01a: Projekte, Mitgliedschaften und Sichtbarkeit
+
+Ein Projekt bündelt Tickets und besitzt mindestens:
+- Eindeutige ID
+- Frei wählbaren Namen
+- Eigentümer
+- Sichtbarkeit: PRIVATE oder SHARED
+- Projektmitglieder bei gemeinsam genutzten Projekten
+
+Benutzer können Projekte erstellen und deren Namen bearbeiten. Neue Projekte sind standardmäßig privat. Der Projektname hat keinen Einfluss auf die Sichtbarkeit.
+
+- PRIVATE: Nur der Eigentümer hat Zugriff auf das Projekt und seine Daten.
+- SHARED: Der Eigentümer und die ausdrücklich zugeteilten Projektmitglieder haben Zugriff auf das Projekt und seine Daten.
+
+Der Eigentümer kann die Sichtbarkeit ändern sowie Projektmitglieder hinzufügen und entfernen. Projektmitglieder dürfen Tickets und Einträge im gemeinsamen Projekt lesen, erstellen und bearbeiten. Die Mitgliedschaft in einer Familie allein gewährt keinen Zugriff auf private oder andere nicht freigegebene Projekte. Nach dem Entfernen einer Mitgliedschaft entfällt der Zugriff; bestehende Projektdaten bleiben erhalten.
+
+Jedes Ticket gehört genau einem Projekt und übernimmt dessen Zugriffsrechte. Zugehörige Zeitbuchungen und weitere Einträge übernehmen ebenfalls die Zugriffsrechte des Projekts. Einträge ohne Ticketreferenz müssen direkt einem Projekt zugeordnet werden.
+
+Beispiele sind ein privates Projekt „Meine Aktivitäten“, ein gemeinsames Projekt „Familienalltag“ oder ein Unternehmensprojekt „Baustelle A“ mit zugeteilten Mitarbeitern.
 
 ### FR-02: Tickets erstellen und verwalten
 
@@ -41,7 +65,8 @@ Ein Ticket besitzt mindestens:
 - Eindeutige ID
 - Titel
 - Beschreibung
-- Kategorie
+- Eintragstyp
+- Projekt
 - Erstellungsdatum
 - Status
 - Optionales Abschlussdatum
@@ -123,7 +148,7 @@ Für eine frei wählbare Kalenderwoche wird ein Bericht erstellt mit:
 
 Fehlende Daten werden von tatsächlichen Nullwerten unterschieden.
 
-Der Bericht wird bei Aufruf aus den gespeicherten Daten berechnet.
+Der Bericht wird bei Aufruf aus den gespeicherten Daten berechnet. Kalender, Berichte und Summen berücksichtigen ausschließlich Projekte und Einträge, auf die der angemeldete Benutzer Zugriff hat.
 
 ### FR-10: Geräteübergreifende Nutzung
 
@@ -133,7 +158,7 @@ Nach erfolgreicher Authentifizierung kann der Benutzer auf Laptop und iPhone auf
 
 ### FR-11: Datenschutz und Datenintegrität
 
-- Jeder Benutzer darf ausschließlich auf die eigenen Daten zugreifen.
+- Jeder Benutzer darf ausschließlich auf eigene private Projekte und auf gemeinsam genutzte Projekte zugreifen, deren Eigentümer oder Mitglied er ist. Diese Zugriffsprüfung gilt serverseitig auch für direkte API-Aufrufe und den Zugriff über IDs.
 - Die Datenbank wird mit geeigneten Zugriffskontrollen abgesichert.
 - Zugangsdaten und geheime Schlüssel dürfen nicht im Frontend offengelegt werden.
 - Zeitbuchungen und historische Daten bleiben bei Abschluss eines Tickets erhalten.
@@ -158,6 +183,11 @@ Nach erfolgreicher Authentifizierung kann der Benutzer auf Laptop und iPhone auf
 6. Eine auf dem iPhone gespeicherte Änderung ist nach der Synchronisierung am Laptop sichtbar.
 7. Der Wochenbericht unterscheidet fehlende Ernährungseinträge von erfassten Nullwerten.
 8. Nicht angemeldete Benutzer erhalten keinen Zugriff auf private Daten.
+9. Ein Benutzer kann ein privates Projekt erstellen; andere Benutzer können weder auf das Projekt noch auf dessen Tickets und Einträge zugreifen.
+10. Der Eigentümer kann ein Projekt teilen und Mitglieder hinzufügen. Mitglieder können dessen Tickets und Einträge lesen, erstellen und bearbeiten.
+11. Nach dem Entfernen eines Mitglieds oder dem Umstellen auf PRIVATE haben die betroffenen Benutzer keinen Zugriff mehr auf das Projekt und seine Daten, auch nicht über direkte API-Aufrufe, Kalender oder Berichte.
+12. Tickets und Einträge übernehmen die Zugriffsrechte ihres Projekts unabhängig von Projektname und Eintragstyp.
+13. Ein Benutzer kann einen Eintragstyp mit typspezifischen Feldern definieren. Bei der Erfassung werden die festgelegten Datentypen, Pflichtfelder und Validierungsregeln geprüft.
 
 ## 6. Bewusst nicht in Version 1 enthalten
 
@@ -168,6 +198,7 @@ Nach erfolgreicher Authentifizierung kann der Benutzer auf Laptop und iPhone auf
 - KI-gestützte Wochenanalysen
 - Offline-Synchronisierung
 - Komplexe Projektplanung und Abhängigkeiten
+- Zusätzliche private Sichtbarkeit einzelner Tickets innerhalb eines gemeinsam genutzten Projekts
 
 Diese Funktionen können nach erfolgreicher Umsetzung der ersten Version ergänzt werden.
 
