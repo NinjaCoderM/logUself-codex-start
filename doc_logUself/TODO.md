@@ -13,10 +13,10 @@ Bereits geprüft:
 - [x] Docker Desktop und Docker Engine über die CLI erreicht.
 - [x] Compose-Verfügbarkeit geklärt: `docker-compose` funktioniert (v2.29.2-desktop.2), `docker compose` wird derzeit nicht erkannt. Keine Neuinstallation erforderlich.
 
-Die Prüfung von Java und Node/npm sowie die Einrichtung von PostgreSQL stehen weiterhin aus.
+Umgebung geprüft: Node.js 24.18.0, npm 11.16.0, JDK 21.0.4 vorhanden (PATH derzeit Java 23). Für das Backend ist JDK 21 vorgesehen; Framework-Versionen folgen bei der Projekterstellung. PostgreSQL 17.11 läuft lokal auf 127.0.0.1:5433; Passwortanmeldung, Healthcheck und Datenerhaltung nach Container-Neuerstellung sind geprüft. Testdaten wurden entfernt.
 
-- [ ] Entwicklungsumgebung prüfen: Java, Node/npm, Docker Desktop und vorhandene Projektdateien; passende Versionen festlegen.
-- [ ] Lokale PostgreSQL-Entwicklungsdatenbank über Docker Compose mit persistentem Volume einrichten; Konfiguration und lokale Zugangsdaten von versionierten Dateien trennen.
+- [x] Entwicklungsumgebung prüfen: Java, Node/npm, Docker Desktop und vorhandene Projektdateien; JDK 21 als Backend-Basis vorgesehen.
+- [x] Lokale PostgreSQL-Entwicklungsdatenbank über Docker Compose mit persistentem Volume einrichten; lokale Zugangsdaten in ausgeschlossener .env, Vorlage in .env.example.
 - [ ] Spring-Boot-Backend mit Kotlin, Datenbankanbindung und versionierten Migrationen einrichten.
 - [ ] Minimales Modell für Projekt, Eintragstyp, Ticket und Erfassung gemäß spec.me anlegen; PrivatMartin und Sport per Migration vorbelegen.
 - [ ] REST-Endpunkte zum Erstellen und Laden von Tickets sowie Speichern und Auflisten ihrer Sporterfassungen bereitstellen; positive Dauer serverseitig prüfen.
