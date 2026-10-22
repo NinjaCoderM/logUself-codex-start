@@ -8,6 +8,13 @@ Ziel: Angular im Browser → REST-API mit Spring Boot/Kotlin → PostgreSQL.
 Zeitbudget für die erste Sitzung: etwa 2 Stunden, abhängig von Einrichtung und vorhandenen Werkzeugen.
 Git ist bereits initialisiert. Die folgenden Umsetzungspunkte sind noch offen.
 
+Bereits geprüft:
+
+- [x] Docker Desktop und Docker Engine über die CLI erreicht.
+- [x] Compose-Verfügbarkeit geklärt: `docker-compose` funktioniert (v2.29.2-desktop.2), `docker compose` wird derzeit nicht erkannt. Keine Neuinstallation erforderlich.
+
+Die Prüfung von Java und Node/npm sowie die Einrichtung von PostgreSQL stehen weiterhin aus.
+
 - [ ] Entwicklungsumgebung prüfen: Java, Node/npm, Docker Desktop und vorhandene Projektdateien; passende Versionen festlegen.
 - [ ] Lokale PostgreSQL-Entwicklungsdatenbank über Docker Compose mit persistentem Volume einrichten; Konfiguration und lokale Zugangsdaten von versionierten Dateien trennen.
 - [ ] Spring-Boot-Backend mit Kotlin, Datenbankanbindung und versionierten Migrationen einrichten.

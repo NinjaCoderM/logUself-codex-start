@@ -27,6 +27,14 @@ Für die Umsetzung werden ein passendes Java-JDK, Node.js/npm und Docker Desktop
 
 Start-, Stopp- und Prüfkommandos werden ergänzt, sobald die jeweiligen Komponenten eingerichtet und die Kommandos überprüft sind. Derzeit gibt es noch keine startbare Anwendung.
 
+Geprüfte lokale Docker-Umgebung:
+
+- Docker Desktop ist gestartet und über die CLI erreichbar (Desktop 4.34.2, Engine 27.2.0).
+- Docker Compose ist installiert: `docker-compose version` meldet `v2.29.2-desktop.2`.
+- In dieser Umgebung funktioniert `docker-compose` mit Bindestrich. `docker compose` mit Leerzeichen wird derzeit nicht erkannt; für die lokale Einrichtung verwenden wir deshalb `docker-compose`.
+- PostgreSQL wurde für dieses Projekt noch nicht als Container eingerichtet; eine Compose-Datei und ein Datenvolume sind noch anzulegen.
+- Der Zugriff aus der eingeschränkten Agentenumgebung erforderte eine Freigabe. Das ist von der lokalen Docker-Installation zu unterscheiden und bedeutet nicht, dass jedes normale Terminal Administratorrechte benötigt.
+
 Lokale Datenbankzugangsdaten gehören in eine nicht versionierte Konfiguration; eine Vorlage kann Platzhalter enthalten. Bis zur Umsetzung von Anmeldung und Zugriffsschutz wird der Prototyp ausschließlich lokal mit Testdaten betrieben.
 
 ## Prüfung von M1
