@@ -22,6 +22,21 @@ Die Anwendung muss über einen Laptop(Electron) und ein iPhone(Webseite) nutzbar
 - Mehrbenutzerfähige Anwendung, die auch alleine genutzt werden kann; Authentifizierung und projektbezogener Zugriffsschutz sind vorzusehen.
 - OpenAPI für Rest Schnittstellen
 
+### 2.1 Datenhaltung: relationale Daten und JSONB
+
+PostgreSQL bleibt die zentrale Datenbank. Für dynamische Datenstrukturen wird der PostgreSQL-Datentyp `JSONB` verwendet; eine zusätzliche NoSQL-Datenbank ist dafür nicht vorgesehen.
+
+- **Relationale Tabellen und typisierte Spalten:** Benutzer, Projekte, Projektmitgliedschaften, Eintragstyp-Identitäten und gemeinsame Grundfelder von Tickets und Buchungen werden relational gespeichert. Dazu gehören beispielsweise IDs, Projekt- und Ticketreferenzen, Eintragstypreferenzen, Titel, Status, Datum und Zeitbuchungsdauer. Beziehungen werden durch Fremdschlüssel abgesichert. Zugriffsrechte und Projektzuordnungen werden nicht in frei veränderbaren JSONB-Feldern gespeichert.
+- **Eintragstypdefinitionen als JSONB:** Die dynamischen Felddefinitionen eines Eintragstyps werden als JSONB gespeichert. Sie beschreiben stabile technische Feldschlüssel, Anzeigenamen, Datentypen, Pflichtfelder und Validierungsregeln. Eine Umbenennung des Anzeigenamens verändert den technischen Feldschlüssel nicht.
+- **Typspezifische Werte als JSONB:** Frei definierbare Zusatzfelder eines Tickets oder einer Buchung werden als JSONB-Objekt gespeichert. Beispiele sind Sportart und Distanz bei Sporteinträgen sowie Mahlzeitenart und Bewertung bei Ernährungseinträgen. Ein neuer Eintragstyp oder ein neues Zusatzfeld erfordert damit keine neue Datenbankspalte.
+- **Auswertungsrelevante Felder:** Gemeinsam verwendete, fachlich fest definierte Werte wie die Dauer einer Zeitbuchung bleiben in typisierten Spalten. JSONB-Felder können ebenfalls gefiltert und ausgewertet werden. Bei häufigen oder aufwendigen Abfragen wird anhand konkreter Abfragen und Messungen entschieden, ob ein gezielter Index oder eine typisierte Spalte erforderlich ist. Derselbe Wert soll nicht unabhängig in einer Spalte und in JSONB gepflegt werden.
+
+Das Backend validiert typspezifische Werte vor jeder Speicherung anhand der zugehörigen Eintragstypdefinition. Das gilt auch für direkte API-Aufrufe. JSONB allein prüft nicht die fachlichen Pflichtfelder oder Validierungsregeln eines Eintragstyps.
+
+Eintragstypdefinitionen werden versioniert; gespeicherte Einträge referenzieren die zugehörige Definitionsversion. Änderungen an Datentypen, Pflichtfeldern oder Feldschlüsseln dürfen vorhandene Daten nicht stillschweigend verändern oder unlesbar machen. Eine Überführung bestehender Einträge auf eine neue Definition erfordert eine explizite, validierte Migration.
+
+Indizes werden passend zu den tatsächlichen Zugriffsmustern angelegt: insbesondere auf Projektzuordnung, Eintragstyp und Datum sowie bei Bedarf auf häufig abgefragte JSONB-Felder. Die Wahl zwischen gezielten Ausdrucksindizes und GIN-Indizes richtet sich nach den verwendeten Abfragen; nicht jedes dynamische Feld wird automatisch indexiert.
+
 ## 3. Funktionale Anforderungen
 
 ### FR-01: Eintragstypen und Datenstruktur
