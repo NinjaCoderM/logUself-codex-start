@@ -1,0 +1,40 @@
+Ich möchte ein persönliches Ticket- und Zeitmanagementsystem entwickeln. Bitte prüfe zunächst meine vorhandene Spec unter `PFAD/ZU/MEINER/SPEC.md`.
+
+Die Anwendung soll am Laptop als Electron-Desktop-Anwendung und am iPhone über einen Browser nutzbar sein. Beide Clients sollen denselben Datenbestand verwenden. Die genauen fachlichen Anforderungen stehen in meiner Spec.
+
+**Deine Aufgabe in diesem Schritt ist ausschließlich Analyse und Planung. Implementiere noch nichts.**
+
+1. Lies die Spec vollständig und fasse die fachlichen Ziele und den geplanten Funktionsumfang zusammen.
+2. Prüfe, ob Anforderungen widersprüchlich, unvollständig oder technisch unklar sind.
+3. Unterscheide zwischen notwendigen Entscheidungen vor dem Entwicklungsbeginn und Details, die später entschieden werden können.
+4. Prüfe, ob die vorgesehene Architektur zu Electron am Laptop, einer Web-App am iPhone und einem gemeinsamen Backend passt.
+5. Schlage eine möglichst einfache, wartbare technische Architektur vor. Begründe die Auswahl der Technologien und weise auf relevante Nachteile hin.
+6. Skizziere das Datenmodell mit Entitäten, Beziehungen und den wesentlichen fachlichen Regeln.
+7. Schlage eine schrittweise Implementierungsreihenfolge vor. Jede Phase soll ein klar begrenztes Ziel und überprüfbare Abnahmekriterien haben.
+8. Nenne die erforderlichen Tests, insbesondere für Berechnungen, Zeitbuchungen, Wochenberichte, Datenzugriff und Synchronisierung.
+9. Berücksichtige Datenschutz, Authentifizierung, Datenbankberechtigungen und den sicheren Betrieb von Electron.
+
+**Arbeitsregeln:**
+- Ändere keine Dateien.
+- Erstelle keinen Programmcode und installiere keine Abhängigkeiten.
+- Erfinde keine Anforderungen, die nicht aus der Spec hervorgehen.
+- Kennzeichne Annahmen und offene Entscheidungen ausdrücklich.
+- Bevorzuge eine einfache Lösung für eine persönliche Anwendung gegenüber unnötig komplexer Architektur.
+- Trenne zwingende Entscheidungen von optionalen späteren Erweiterungen.
+
+Gib das Ergebnis strukturiert mit folgenden Abschnitten aus:
+
+A. Zusammenfassung der Spec  
+B. Fehlende oder widersprüchliche Anforderungen  
+C. Architekturvorschlag mit Begründung  
+D. Datenmodell  
+E. Implementierungsphasen mit Abnahmekriterien  
+F. Test- und Sicherheitskonzept  
+G. Konkrete nächste Schritte
+
+Warte nach dieser Analyse auf meine Entscheidung, bevor du Änderungen am Projekt vornimmst.
+
+
+
+
+

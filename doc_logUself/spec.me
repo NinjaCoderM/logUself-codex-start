@@ -1,0 +1,195 @@
+# Personal Tracker – Functional Specification
+
+**Version:** 0.1  
+**Status:** Initial draft  
+**Ziel:** Persönliches Ticket-, Zeit-, Sport- und Ernährungstracking und Wochenbericht.
+
+## 1. Zielsetzung
+
+Die Anwendung unterstützt eine Person dabei, persönliche Projekte zu organisieren, Zeitaufwände zu dokumentieren, Sportaktivitäten zu erfassen und die eigene Ernährung zu beobachten.
+
+Die Anwendung muss über einen Laptop(Electron) und ein iPhone(Webseite) nutzbar sein. Die Daten werden zwischen beiden Geräten synchronisiert.
+
+## 2. Technische Rahmenbedingungen
+
+- Responsive Webanwendung als Progressive Web App (PWA).
+- Zusatz: Electron auf Desktop möglich
+- Frontend: React und TypeScript.
+- Datenbank und Backend: SpringBoot mit Kotlin und PostgreSQL.
+- Local über Docker Desktop
+- Zeitzone: Europe/Vienna.
+- Sprache der Benutzeroberfläche: Deutsch.
+- Einzelbenutzeranwendung; Authentifizierung und Zugriffsschutz sind vorzusehen.
+- OpenAPI für Rest Schnittstellen
+
+## 3. Funktionale Anforderungen
+
+### FR-01: Kategorien
+
+Die Anwendung bietet die Hauptkategorien:
+- Lernen
+- Sport
+- Ernährung
+- Quality Time
+- Brain Rot Time
+
+Jeder Ticket-Datensatz gehört zu einer Hauptkategorie.
+
+### FR-02: Tickets erstellen und verwalten
+
+Ein Ticket besitzt mindestens:
+- Eindeutige ID
+- Titel
+- Beschreibung
+- Kategorie
+- Erstellungsdatum
+- Status
+- Optionales Abschlussdatum
+
+Mögliche Statuswerte:
+- OPEN
+- IN_PROGRESS
+- CLOSED
+
+Tickets können erstellt, bearbeitet, gefiltert und geschlossen werden. Geschlossene Tickets bleiben für historische Auswertungen verfügbar.
+
+### FR-03: Zeitbuchungen
+
+Zu einem Ticket können mehrere Zeitbuchungen erfasst werden.
+
+Eine Zeitbuchung enthält:
+- Ticketreferenz
+- Datum
+- Dauer in Minuten - nicht bei Ernährung
+- Beschreibung
+
+Zeitbuchungen können bearbeitet und gelöscht werden. Die Dauer muss positiv sein. Die Anwendung zeigt Summen pro Tag, Kalenderwoche und Ticket an.
+
+### FR-04: Sportaktivitäten Zeitbuchung Zusatz
+
+Sportaktivitäten enthalten:
+- Datum
+- Sportart
+- Dauer in Minuten
+- Optional: Distanz in Kilometern
+- Optional: Beschreibung und Ticketreferenz
+- Optional: Garmin Intensitätsminuten 
+- Optional: Garmin Leistung
+- Optional: Belastung, Nutzen
+
+Sportzeiten fließen in den Wochenbericht ein. Die Anwendung vermeidet eine doppelte Anrechnung derselben Aktivität.
+
+### FR-05: Ernährung Zeitbuchung ohne Dauer Zusatz - auch meherere pro Tag
+
+Ein Ernährungseintrag enthält: 
+- Datum
+- Kalorien
+- Beschreibung
+- Optional: Mahlzeitenart
+- Optional: Bewertung von 1 bis 5
+
+Mehrere Einträge pro Tag sind zulässig. Die Anwendung versucht Ernährungsumstellungen zu dokumentieren und bewertet die Vollständigkeit der Datenerhebung. 
+z.B. jeden Tag ein Eintrag, Bewertungen vorhanden, Durchschnitt der Bewertung
+
+### FR-06: Quality Time Zeitbuchung Zusatz
+- Datum
+- Art
+- Dauer in Minuten
+
+### FR-07: Brain Rot Time 
+- Datum
+- Art
+- Dauer in Minuten
+
+### FR-08: Kalender
+
+Die Anwendung stellt eine Kalenderansicht mit Tages- und Wochenansicht bereit. Es soll als Rückblick alle gebuchten Zeiten anzeigen. 
+
+Für ein ausgewähltes Datum werden die zugehörigen Tickets, Zeitbuchungen, Sportaktivitäten und Ernährungseinträge angezeigt.
+
+Einträge lassen sich direkt aus dem Kalender erstellen und öffnen.
+
+### FR-09: Wochenbericht
+
+Für eine frei wählbare Kalenderwoche wird ein Bericht erstellt mit:
+- Erfasster Lernzeit
+- Erfasster Sportzeit
+- Erfasste Quality Time
+- Erfasste Brain Rot Time
+- Zeitaufwand je Projekt
+- Abgeschlossenen Tickets
+- Ernährungseinträgen und dokumentierten Kalorien
+- Vergleich mit der Vorwoche, sofern Daten vorliegen
+
+Fehlende Daten werden von tatsächlichen Nullwerten unterschieden.
+
+Der Bericht wird bei Aufruf aus den gespeicherten Daten berechnet.
+
+### FR-10: Geräteübergreifende Nutzung
+
+Nach erfolgreicher Authentifizierung kann der Benutzer auf Laptop und iPhone auf denselben Datenbestand zugreifen.
+
+Änderungen werden serverseitig gespeichert. Bei fehlender Internetverbindung wird ein verständlicher Hinweis angezeigt. Offline-Erfassung und spätere Synchronisierung sind nicht Bestandteil der ersten Version.
+
+### FR-11: Datenschutz und Datenintegrität
+
+- Jeder Benutzer darf ausschließlich auf die eigenen Daten zugreifen.
+- Die Datenbank wird mit geeigneten Zugriffskontrollen abgesichert.
+- Zugangsdaten und geheime Schlüssel dürfen nicht im Frontend offengelegt werden.
+- Zeitbuchungen und historische Daten bleiben bei Abschluss eines Tickets erhalten.
+- Export der eigenen Daten wird als spätere Erweiterung vorgesehen.
+
+## 4. Nichtfunktionale Anforderungen
+
+- Bedienbar auf aktuellen Desktop- und mobilen Browsern.
+- Mobile Formulare müssen mit einer Hand möglichst einfach nutzbar sein.
+- Häufige Eingaben sollen mit wenigen Interaktionen möglich sein.
+- Eingaben werden validiert und verständliche Fehlermeldungen angezeigt.
+- Die Anwendung soll ohne kostenpflichtige App-Store-Veröffentlichung nutzbar sein.
+- Datenbankänderungen werden über versionierte Migrationen verwaltet.
+
+## 5. Abnahmekriterien für Version 1
+
+1. Ein Ticket kann erstellt und geschlossen werden.
+2. Für ein bestehendes Ticket können mehrere Zeitbuchungen angelegt werden.
+3. Sport- und Ernährungseinträge können für ein Datum erfasst werden.
+4. Die Tages- und Wochensummen stimmen mit den gespeicherten Einträgen überein.
+5. Ein geschlossener Vorgang bleibt in historischen Berichten sichtbar.
+6. Eine auf dem iPhone gespeicherte Änderung ist nach der Synchronisierung am Laptop sichtbar.
+7. Der Wochenbericht unterscheidet fehlende Ernährungseinträge von erfassten Nullwerten.
+8. Nicht angemeldete Benutzer erhalten keinen Zugriff auf private Daten.
+
+## 6. Bewusst nicht in Version 1 enthalten
+
+- Native iOS-App und App-Store-Veröffentlichung
+- Push-Benachrichtigungen
+- Automatischer Import aus Apple Health oder Garmin
+- Automatische Erkennung von Kalorien aus Fotos
+- KI-gestützte Wochenanalysen
+- Offline-Synchronisierung
+- Komplexe Projektplanung und Abhängigkeiten
+
+Diese Funktionen können nach erfolgreicher Umsetzung der ersten Version ergänzt werden.
+
+----
+Bitte folgendes integrieren 
+Was ich technisch für logUself wählen würde
+Für ein modernes Webprojekt würde ich diese Architektur prüfen:
+Bestandteil	Mögliche Lösung
+Benutzeroberfläche	Angular oder die bereits gewählte Frontend-Technologie
+Offline-Fähigkeit	Progressive Web App (PWA) mit Service Worker
+Lokale Datenbank	IndexedDB, gegebenenfalls mit einer Bibliothek wie Dexie
+Backend	REST-API
+Zentrale Datenbank	PostgreSQL
+Konflikterkennung	Versionsnummern und Optimistic Locking
+Synchronisation	Lokale Outbox, Wiederholungslogik und Serverbestätigung
+IndexedDB ist dabei für strukturierte lokale Daten geeigneter als localStorage. Die PWA kann die Anwendungsdateien offline bereitstellen; IndexedDB speichert die Daten und ausstehenden Änderungen. Die Synchronisation sollte zusätzlich einen expliziten Mechanismus zum erneuten Versuch und einen sichtbaren Synchronisationsstatus besitzen. Auf automatische Hintergrundsynchronisation allein würde ich mich nicht verlassen, da sie je nach Browser und Betriebssystem eingeschränkt sein kann.
+----
+Bitte folgendes integrieren
+logUself soll nicht bloß als Anzeige für bau-codex verwenden, sondern als zentrale Datenplattform, über die Daten erfasst, ergänzt, geprüft und korrigiert werden.
+Dein Beispiel mit fehlenden Beginn- und Endzeiten macht den Nutzen deutlich: bau-codex erfasst die fachlichen Daten einer Baustelle. logUself erkennt, dass bei einem Mitarbeiter ein Zeiteintrag unvollständig ist. Ein berechtigter Benutzer ergänzt die fehlende Zeit in logUself. Anschließend steht die korrigierte Information auch bau-codex zur Verfügung.
+Du möchtest damit vermeiden, dass du für jede Ausnahme einen eigenen Bildschirm und jede Korrekturfunktion direkt in bau-codex implementieren musst.
+----
+Bitte folgendes integrieren
+-Alle Daten über Request abfragbar ,auch mit Abfragesprache ähnliche wie SQL oder Jira JQL oder über URL mit ID auch wie bei Jira
+-Schnittstellen zu Chip-Pippin (Projekt AN Chip Kommen Gehen Pause) -> Anmeldung/Abmeldung/Pause mit Chip Pippin in logUself
