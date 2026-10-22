@@ -6,7 +6,7 @@ Diese Datei enthält die Umsetzungsschritte und ihren Erledigungsstand. Die fach
 
 Ziel: Angular im Browser → REST-API mit Spring Boot/Kotlin → PostgreSQL.
 Zeitbudget für die erste Sitzung: etwa 2 Stunden, abhängig von Einrichtung und vorhandenen Werkzeugen.
-Git ist bereits initialisiert. Die folgenden Umsetzungspunkte sind noch offen.
+Git ist bereits initialisiert. Die Checkliste zeigt erledigte und offene Umsetzungspunkte.
 
 Bereits geprüft:
 
@@ -20,14 +20,14 @@ Umgebung geprüft: Node.js 24.18.0, npm 11.16.0, JDK 21.0.4 vorhanden (PATH derz
 - [x] Spring-Boot-Backend mit Kotlin, Datenbankanbindung und versionierten Migrationen einrichten (Spring Boot 4.0.8, Kotlin 2.2.21, Maven-Wrapper, JDK 21).
 - [x] Minimales Modell für Projekt, Eintragstyp, Ticket und Erfassung für M1 anlegen; PrivatMartin und Sport per Migration vorbelegen. Vollständige Berechtigungen, Historie und generische Typvalidierung folgen nach M1.
 - [x] REST-Endpunkte zum Erstellen und Laden von Tickets sowie Speichern und Auflisten ihrer Sporterfassungen bereitstellen; positive Dauer serverseitig prüfen.
-- [ ] Angular mit TypeScript im Browser einrichten und API anbinden: Ticket anlegen/auswählen, Sporterfassung mit Datum, Sportart, Dauer und optionaler Beschreibung speichern.
-- [ ] Erfassungen und Dauer-Summe am Ticket anzeigen.
+- [x] Angular mit TypeScript im Browser einrichten und API anbinden: Ticket anlegen/auswählen, Sporterfassung mit Datum, Sportart, Dauer und optionaler Beschreibung speichern.
+- [x] Erfassungen und Dauer-Summe am Ticket anzeigen.
 - [ ] Prüfen: 120 + 30 Minuten ergeben 2 Stunden 30 Minuten; Neuladen und Backend-Neustart erhalten die Daten; 0 und negative Dauer werden ohne Speicherung abgewiesen.
 - [x] Backend-Integrationstest gegen PostgreSQL: Speicherung, Zuordnung, Summe 150 Minuten, Kalenderdatum, JSONB-Sportart und ungültige Dauer geprüft; Testschema getrennt vom Entwicklungsbestand.
-- [ ] Sichtbaren Ablauf mit Angular im Browser prüfen.
-- [ ] Tatsächliche Voraussetzungen, Start-, Stopp- und Prüfkommandos in README.md dokumentieren; Erledigungsstand hier aktualisieren.
+- [x] Sichtbaren Ablauf mit Angular im Browser prüfen: Playwright/Edge, Neuladen, 150-Minuten-Summe, Dauer 0, mobile Breite und API-Ausfall.
+- [x] Tatsächliche Voraussetzungen, Start-, Stopp- und Prüfkommandos in README.md dokumentieren; Erledigungsstand hier aktualisieren.
 
-Backend-Start und Tests sind bereits in README.md dokumentiert; Frontend-Kommandos folgen. Manueller API-Test hat ein Demo-Ticket „Mein Sport“ mit einer Sporterfassung (120 Minuten) angelegt. Noch kein vollständiger M1-Abschluss, da Angular fehlt.
+Backend- und Frontend-Start sowie Tests stehen in README.md. Manueller API-Test hat ein Demo-Ticket „Mein Sport“ mit 120 Minuten angelegt; Browsertests hinterlassen zusätzlich gekennzeichnete Browsercheck-Tickets. Angular 22.2 mit TypeScript 6.0 ist lokal unter http://127.0.0.1:4200 erreichbar. Produktionsbuild geprüft; Vite-Patch 8.3.5 per Override, npm meldet keine bekannten Lücken.
 
 Zwischenziel bei Einrichtungsaufwand: Ticket über Angular speichern und nach Backend-Neustart wieder laden. Dies ist noch nicht die vollständige M1-Abnahme.
 Für M1 zurückgestellt: Electron, Typeditor, Anmeldung, Familienfreigaben, vollständige Historie, Kalender, Wochenbericht und externe Integrationen. Bis zum Zugriffsschutz nur lokale Testdaten verwenden.

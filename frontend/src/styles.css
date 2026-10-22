@@ -1,0 +1,78 @@
+﻿:root {
+  font-family: Inter, 'Segoe UI', sans-serif;
+  color: #233c39;
+  background: #f4f6f2;
+  font-synthesis: none;
+}
+* {
+  box-sizing: border-box;
+}
+body {
+  margin: 0;
+}
+button,
+input,
+select {
+  font: inherit;
+}
+button {
+  cursor: pointer;
+}
+button:disabled {
+  cursor: not-allowed;
+  opacity: 0.55;
+}
+a {
+  color: inherit;
+}
+button:focus-visible,
+a:focus-visible {
+  outline: 3px solid #9b6800;
+  outline-offset: 4px;
+}
+input:focus,
+select:focus {
+  outline: 2px solid #659b88;
+  outline-offset: 1px;
+}
+h1,
+h2,
+h3,
+p {
+  margin-top: 0;
+}
+h2 {
+  font-size: 1.22rem;
+  letter-spacing: -0.03em;
+  margin-bottom: 16px;
+}
+small {
+  font-size: 0.8rem;
+}
+input,
+select {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid #d6dfd9;
+  border-radius: 8px;
+  background: #fff;
+  color: #233c39;
+  padding: 10px 12px;
+}
+label {
+  display: block;
+  font-size: 0.83rem;
+  font-weight: 600;
+  margin: 16px 0 7px;
+}
+label span {
+  font-weight: 400;
+  color: #63746c;
+  margin-left: 4px;
+}
+fieldset {
+  border: 0;
+  padding: 0;
+  margin: 0;
+  min-width: 0;
+}

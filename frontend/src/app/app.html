@@ -1,0 +1,210 @@
+﻿<header class="topbar">
+  <a class="brand" href="/">log<span>U</span>self<span class="brand-dot">.</span></a
+  ><span class="environment">Lokaler Prototyp · Testdaten</span>
+</header>
+<main>
+  <div class="intro">
+    <p class="eyebrow">DEIN ALLTAG, FESTGEHALTEN</p>
+    <h1>Zeit für einen Überblick.</h1>
+    <p>Aktivitäten sammeln. Fortschritt sehen. Ein Eintrag nach dem anderen.</p>
+  </div>
+  @if (error()) {
+    <div class="message error" role="alert">
+      {{ error() }}
+      @if (!tickets().length) {
+        <button type="button" (click)="load()" [disabled]="loading()">Erneut laden</button>
+      }
+    </div>
+  }
+  @if (notice()) {
+    <div class="message success" role="status">{{ notice() }}</div>
+  }
+  @if (loading()) {
+    <p role="status" class="muted">Deine Projekte werden geladen …</p>
+  } @else {
+    <div class="workspace">
+      <aside>
+        <section class="panel ticket-panel">
+          <p class="eyebrow">DEINE TICKETS</p>
+          <h2>Was steht an?</h2>
+          <div class="ticket-list">
+            @for (ticket of tickets(); track ticket.id) {
+              <button
+                type="button"
+                class="ticket"
+                [class.active]="selectedId() === ticket.id"
+                [attr.aria-pressed]="selectedId() === ticket.id"
+                [disabled]="saving() || creating()"
+                (click)="selectTicket(ticket.id)"
+              >
+                <span class="ticket-symbol">↗</span
+                ><span
+                  ><strong>{{ ticket.title }}</strong
+                  ><small>{{ projectName(ticket.project_id) }} · Sport</small></span
+                ><span class="arrow">›</span>
+              </button>
+            } @empty {
+              <p class="muted">Noch kein Ticket. Lege dein erstes Sport-Ticket an.</p>
+            }
+          </div>
+        </section>
+        <section class="panel">
+          <h2>Neues Ticket</h2>
+          <p class="muted small">Ein Platz für deine Sporterfassungen.</p>
+          <form #ticketForm="ngForm" (ngSubmit)="createTicket(ticketForm)">
+            <label for="project">Projekt</label
+            ><select id="project" name="project" [(ngModel)]="projectId" required>
+              @for (project of projects(); track project.id) {
+                <option [value]="project.id">{{ project.name }}</option>
+              }
+            </select>
+            <label for="ticketTitle">Titel</label
+            ><input
+              id="ticketTitle"
+              name="title"
+              [(ngModel)]="ticketTitle"
+              required
+              placeholder="Zum Beispiel: Mein Sport"
+              maxlength="200"
+            />
+            <label for="ticketDescription">Beschreibung <span>optional</span></label
+            ><input
+              id="ticketDescription"
+              name="ticketDescription"
+              [(ngModel)]="ticketDescription"
+              placeholder="Worum geht es?"
+            />
+            <p class="type-note">Eintragstyp: <strong>Sport</strong></p>
+            <button
+              class="secondary"
+              type="submit"
+              [disabled]="ticketForm.invalid || !ticketTitle.trim() || creating() || saving()"
+            >
+              {{ creating() ? 'Wird angelegt …' : '+ Ticket anlegen' }}
+            </button>
+          </form>
+        </section>
+      </aside>
+      <div class="detail">
+        @if (selected(); as ticket) {
+          <section class="panel summary">
+            <div>
+              <p class="eyebrow">{{ projectName(ticket.project_id) }} / SPORT</p>
+              <h2>{{ ticket.title }}</h2>
+              @if (ticket.description) {
+                <p class="muted">{{ ticket.description }}</p>
+              }
+            </div>
+            <div class="total">
+              <small>Gesamt erfasst</small
+              ><strong>{{ loadingRecords() ? '…' : formatDuration(totalMinutes()) }}</strong
+              ><span>{{ records().length }} Erfassungen</span>
+            </div>
+          </section>
+          <section class="panel">
+            <div class="section-title">
+              <div>
+                <p class="eyebrow">AKTIV GEWESEN?</p>
+                <h2>Zeit erfassen</h2>
+              </div>
+              <span class="badge">Sport</span>
+            </div>
+            <form #recordForm="ngForm" (ngSubmit)="saveRecord(recordForm)">
+              <fieldset [disabled]="saving() || creating() || loadingRecords()">
+                <div class="form-grid">
+                  <div>
+                    <label for="date">Datum</label
+                    ><input id="date" type="date" name="date" [(ngModel)]="date" required />
+                  </div>
+                  <div>
+                    <label for="sport">Sportart</label
+                    ><input
+                      id="sport"
+                      name="sport"
+                      [(ngModel)]="sport"
+                      required
+                      placeholder="Zum Beispiel: Laufen"
+                    />
+                  </div>
+                  <div>
+                    <label for="duration">Dauer in Minuten</label
+                    ><input
+                      id="duration"
+                      type="number"
+                      name="duration"
+                      [(ngModel)]="duration"
+                      required
+                      min="1"
+                      step="1"
+                      placeholder="120"
+                      #durationInput="ngModel"
+                    />
+                    @if (durationInput.invalid && durationInput.touched) {
+                      <small class="field-error">Bitte eine positive Dauer angeben.</small>
+                    }
+                  </div>
+                  <div>
+                    <label for="description">Beschreibung <span>optional</span></label
+                    ><input
+                      id="description"
+                      name="description"
+                      [(ngModel)]="description"
+                      placeholder="Wie war deine Aktivität?"
+                    />
+                  </div>
+                </div>
+                <div class="form-footer">
+                  <span class="muted small">Wird dauerhaft in deinem Ticket gespeichert.</span
+                  ><button
+                    class="primary"
+                    type="submit"
+                    [disabled]="recordForm.invalid || !sport.trim() || saving()"
+                  >
+                    {{ saving() ? 'Wird gespeichert …' : 'Erfassung speichern ↗' }}
+                  </button>
+                </div>
+              </fieldset>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="section-title">
+              <h2>Deine Erfassungen</h2>
+              <span class="muted small">Nach Datum</span>
+            </div>
+            @if (loadingRecords()) {
+              <p role="status" class="muted">Erfassungen werden geladen …</p>
+            } @else {
+              @for (record of records(); track record.id) {
+                <article class="record">
+                  <div class="record-icon">↗</div>
+                  <div class="record-body">
+                    <strong>{{ record.fields.sport }}</strong
+                    ><small>{{ formatDate(record.date) }}</small>
+                    @if (record.description) {
+                      <p>{{ record.description }}</p>
+                    }
+                  </div>
+                  <strong class="record-duration">{{
+                    formatDuration(record.duration_minutes)
+                  }}</strong>
+                </article>
+              } @empty {
+                <div class="empty">
+                  <span>↗</span>
+                  <h3>Hier beginnt dein Rückblick.</h3>
+                  <p>Speichere deine erste Aktivität über das Formular.</p>
+                </div>
+              }
+            }
+          </section>
+        } @else {
+          <section class="panel empty">
+            <h2>Dein erstes Ticket wartet.</h2>
+            <p>Lege links ein Sport-Ticket an, um Aktivitäten zu erfassen.</p>
+          </section>
+        }
+      </div>
+    </div>
+  }
+  <footer>logUself · Dein persönliches Aktivitätsjournal</footer>
+</main>

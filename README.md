@@ -5,7 +5,7 @@ logUself verwaltet Projekte, Tickets mit dynamischen Eintragstypen und strukturi
 
 ## Projektstand
 
-Die lokale PostgreSQL-Entwicklungsdatenbank und das Kotlin-Backend sind eingerichtet. Tickets und Sporterfassungen können über die REST-API gespeichert und geladen werden. Das Angular-Frontend ist noch nicht implementiert; M1 ist deshalb noch nicht vollständig abgeschlossen. Git ist bereits initialisiert.
+Der erste Browser-Ablauf ist umgesetzt: Angular zeigt Tickets und Sporterfassungen an, legt neue Daten über das Kotlin-Backend in PostgreSQL ab und berechnet die Gesamtdauer am Ticket. Build und Browsertests sind erfolgreich. M1 ist als lokaler Prototyp nutzbar; die weiteren Anforderungen der Spec sind noch nicht vollständig umgesetzt. Git ist bereits initialisiert.
 
 - [Funktionale und technische Spec](doc_logUself/spec.me)
 - [Arbeitsplan und Erledigungsstand](doc_logUself/TODO.md)
@@ -23,9 +23,9 @@ Geplanter Aufbau:
 
 ## Voraussetzungen und lokaler Betrieb
 
-Geprüft sind Node.js 24.18.0, npm 11.16.0 und JDK 21.0.4 unter `C:\Program Files\Java\jdk-21`. Derzeit zeigt `java` im PATH auf Java 23; für das spätere Backend ist JDK 21 vorgesehen. Die konkrete Spring-Boot-/Angular-Version wird beim Anlegen der Anwendungen festgelegt. Eine vorhandene PostgreSQL-Instanz ist nicht erforderlich.
+Geprüft sind Node.js 24.18.0, npm 11.16.0 und JDK 21.0.4 unter `C:\Program Files\Java\jdk-21`. Derzeit zeigt `java` im PATH auf Java 23; das Backend-Skript verwendet bei nicht gesetztem `JAVA_HOME` JDK 21. Eine vorhandene PostgreSQL-Instanz ist nicht erforderlich.
 
-Das Backend verwendet Spring Boot 4.0.8, Kotlin 2.2.21 und Java 21. Der Maven-Wrapper ist enthalten. Frontend-Kommandos folgen nach dessen Einrichtung.
+Das Backend verwendet Spring Boot 4.0.8, Kotlin 2.2.21 und Java 21. Der Maven-Wrapper ist enthalten. Das Frontend verwendet Angular 22.2 und TypeScript 6.0; die aufgelösten Abhängigkeiten stehen in `frontend/package-lock.json`.
 
 Geprüfte lokale Docker-Umgebung:
 
@@ -99,6 +99,33 @@ Ticket erstellen: JSON mit `projectId`, `entryTypeId`, `title` und optional `des
 M1 unterstützt derzeit ausdrücklich nur die vorbereitete Sportdefinition und ihre festen Validierungen. Ein generischer Typeditor, beliebige Schemaauswertung, Authentifizierung und Historie sind noch nicht umgesetzt. Beim manuellen API-Test wurde ein Demo-Ticket „Mein Sport“ mit 120 Minuten angelegt und bleibt als lokaler Beispieldatensatz erhalten.
 
 ## Prüfung von M1
+
+### Angular starten
+
+Backend und PostgreSQL müssen laufen. In einem weiteren PowerShell-Terminal:
+
+```powershell
+cd frontend
+npm.cmd ci
+npm.cmd start
+```
+
+Öffnen: [logUself lokal](http://127.0.0.1:4200). Bei bereits installierten Abhängigkeiten kann `npm.cmd ci` entfallen. Stoppen mit Strg+C. Der Entwicklungsproxy leitet `/api` an `127.0.0.1:8080` weiter. Der Angular-Server ist nur lokal erreichbar. Für eine spätere Auslieferung des Builds muss separat eine Weiterleitung für `/api` eingerichtet werden.
+
+Ein Ticket auswählen oder im Projekt PrivatMartin ein Sport-Ticket anlegen. Dann Datum, Sportart und positive Dauer in Minuten eingeben. Die Oberfläche zeigt alle Erfassungen des Tickets und die Gesamtdauer; es gibt noch keine Wochenfilterung. Datumsvorbelegung erfolgt für Europe/Vienna.
+
+```powershell
+# Produktionsbuild prüfen
+npm.cmd run build
+# Echte Browsertests (laufendes Frontend, Backend und PostgreSQL erforderlich)
+npm.cmd run test:e2e
+```
+
+Die Playwright-Tests nutzen lokal installiertes Microsoft Edge im Headless-Modus. Sie prüfen Ticketanlage, zwei Erfassungen mit insgesamt 150 Minuten, gesperrtes Speichern bei Dauer 0, Datenerhalt nach Neuladen, schmale Darstellung und Fehlermeldung samt Wiederholen bei API-Ausfall. Jeder Durchlauf hinterlässt ein gekennzeichnetes `Browsercheck …`-Ticket mit Testdaten. Screenshots liegen unter `frontend/test-results/` (nicht versioniert).
+
+Vite ist per npm-Override auf Patchstand 8.3.5 festgelegt, da die initial erzeugte Angular-Build-Abhängigkeit einen von npm gemeldeten fehlerhaften Stand verwendete. Nach Aktualisierung meldet npm keine bekannten Lücken. Bei einem späteren Angular-Update ist zu prüfen, ob der Override noch erforderlich ist.
+
+### Manuelle Abnahme
 
 1. Ticket über die Oberfläche erstellen und wieder laden.
 2. Zwei Sporterfassungen mit 120 und 30 Minuten speichern; die Summe beträgt 2 Stunden 30 Minuten.
