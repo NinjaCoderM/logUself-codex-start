@@ -5,7 +5,7 @@ logUself verwaltet Projekte, Tickets mit dynamischen Eintragstypen und strukturi
 
 ## Projektstand
 
-Die Anforderungen und der erste Umsetzungsschritt sind dokumentiert. Die lokale PostgreSQL-Entwicklungsdatenbank ist eingerichtet und geprüft. Backend und Frontend sind noch nicht implementiert. Git ist bereits initialisiert.
+Die lokale PostgreSQL-Entwicklungsdatenbank und das Kotlin-Backend sind eingerichtet. Tickets und Sporterfassungen können über die REST-API gespeichert und geladen werden. Das Angular-Frontend ist noch nicht implementiert; M1 ist deshalb noch nicht vollständig abgeschlossen. Git ist bereits initialisiert.
 
 - [Funktionale und technische Spec](doc_logUself/spec.me)
 - [Arbeitsplan und Erledigungsstand](doc_logUself/TODO.md)
@@ -25,7 +25,7 @@ Geplanter Aufbau:
 
 Geprüft sind Node.js 24.18.0, npm 11.16.0 und JDK 21.0.4 unter `C:\Program Files\Java\jdk-21`. Derzeit zeigt `java` im PATH auf Java 23; für das spätere Backend ist JDK 21 vorgesehen. Die konkrete Spring-Boot-/Angular-Version wird beim Anlegen der Anwendungen festgelegt. Eine vorhandene PostgreSQL-Instanz ist nicht erforderlich.
 
-Backend- und Frontend-Kommandos folgen nach deren Einrichtung. Die Datenbank kann bereits mit den folgenden Befehlen gestartet werden.
+Das Backend verwendet Spring Boot 4.0.8, Kotlin 2.2.21 und Java 21. Der Maven-Wrapper ist enthalten. Frontend-Kommandos folgen nach dessen Einrichtung.
 
 Geprüfte lokale Docker-Umgebung:
 
@@ -61,7 +61,42 @@ docker-compose up -d --wait postgres
 
 `down` ohne `--volumes` erhält die Daten. `down --volumes` würde die Daten dieses Projekts löschen. Änderungen an Initialisierungswerten in `.env`, insbesondere am Passwort, ändern keine bereits initialisierte Datenbank.
 
-Verifiziert: Konfiguration gültig, Container healthy, TCP-Port 5433 erreichbar, Passwortanmeldung erfolgreich. Ein Testdatensatz blieb nach `down` und erneutem `up` erhalten; Testtabelle und Testschema wurden anschließend entfernt. Anwendungstabellen werden erst mit den Backend-Migrationen angelegt.
+Verifiziert: Konfiguration gültig, Container healthy, TCP-Port 5433 erreichbar, Passwortanmeldung erfolgreich. Ein Testdatensatz blieb nach `down` und erneutem `up` erhalten; Testtabelle und Testschema wurden anschließend entfernt. Anwendungstabellen und die Beispieldaten PrivatMartin/Sport werden beim Backendstart durch Flyway angelegt.
+
+### Backend starten und testen
+
+In PowerShell im Repository-Hauptverzeichnis:
+
+```powershell
+docker-compose up -d --wait postgres
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/backend.ps1 run
+```
+
+Das Skript lädt ausschließlich die PostgreSQL-Konfiguration aus `.env` und verwendet JDK 21, wenn `JAVA_HOME` noch nicht gesetzt ist. Ein vorhandenes `JAVA_HOME` muss auf ein geeignetes JDK zeigen. Beim ersten Aufruf lädt der Wrapper Maven und Abhängigkeiten aus dem Internet. Der Server bindet an `127.0.0.1:8080`. Stoppen im ausführenden Terminal mit Strg+C.
+
+```powershell
+# In einem zweiten Terminal: Integrationstest gegen PostgreSQL
+powershell -NoProfile -ExecutionPolicy Bypass -File scripts/backend.ps1 test
+# API lesen
+Invoke-RestMethod http://127.0.0.1:8080/api/projects
+Invoke-RestMethod http://127.0.0.1:8080/api/tickets
+```
+
+Der Integrationstest nutzt das separate Schema `loguself_test` und entfernt seine Tickets und Erfassungen anschließend. Er prüft echte HTTP-Requests, Speicherung, 120 + 30 Minuten, JSONB-Sportart, unverändertes Kalenderdatum, ungültige Eingaben und fehlende Tickets. PostgreSQL muss dafür laufen. Der normale Entwicklungsbetrieb verwendet das Schema `public`.
+
+Verfügbare API:
+
+| Methode | Pfad | Zweck |
+| --- | --- | --- |
+| GET | `/api/projects` | Projekte auflisten |
+| GET | `/api/entry-types` | Typen auflisten |
+| GET / POST | `/api/tickets` | Tickets auflisten / erstellen |
+| GET | `/api/tickets/{id}` | Einzelnes Ticket lesen |
+| GET / POST | `/api/tickets/{id}/records` | Erfassungen samt `totalMinutes` lesen / Sporterfassung speichern |
+
+Ticket erstellen: JSON mit `projectId`, `entryTypeId`, `title` und optional `description`. Die vorbelegten IDs sind `00000000-0000-0000-0000-000000000001` (PrivatMartin) und `00000000-0000-0000-0000-000000000002` (Sport). Sporterfassung erstellen: JSON mit `date` (YYYY-MM-DD), `durationMinutes` (positive Ganzzahl), `sport` und optional `description`.
+
+M1 unterstützt derzeit ausdrücklich nur die vorbereitete Sportdefinition und ihre festen Validierungen. Ein generischer Typeditor, beliebige Schemaauswertung, Authentifizierung und Historie sind noch nicht umgesetzt. Beim manuellen API-Test wurde ein Demo-Ticket „Mein Sport“ mit 120 Minuten angelegt und bleibt als lokaler Beispieldatensatz erhalten.
 
 ## Prüfung von M1
 

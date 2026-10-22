@@ -1,0 +1,12 @@
+server:
+  address: 127.0.0.1
+  port: ${SERVER_PORT:8080}
+spring:
+  application:
+    name: loguself
+  datasource:
+    url: jdbc:postgresql://127.0.0.1:${POSTGRES_PORT:5433}/${POSTGRES_DB:loguself}
+    username: ${POSTGRES_USER:loguself_dev}
+    password: ${POSTGRES_PASSWORD}
+  flyway:
+    enabled: true
