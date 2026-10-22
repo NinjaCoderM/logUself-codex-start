@@ -325,6 +325,22 @@ Vor der Übernahme einer Erfassung oder Änderung muss die Prüfung durch den re
 27. Die wiederholte Übertragung desselben Zeitereignisses erzeugt keine zusätzlichen Daten oder Historieneinträge; ein abweichender Inhalt mit derselben Ereignis-ID wird abgewiesen.
 28. Vor Registrierung von chip-pippin lässt der Sanity-Check offene Arbeitstage zu und weist überlappende Pausen oder vorhandene Endzeitpunkte vor Beginn zurück. Nach Registrierung darf dieser Check keine Ersatzfreigabe mehr liefern: Ist der Prüfdienst nicht erreichbar, erscheint eine Fehlermeldung und der Änderungsversuch verändert keine fachlichen Daten.
 
+### 5.1 Erster testbarer Entwicklungsstand (M1)
+
+M1 ist ein lokaler Prototyp und ein erster Teilumfang von Version 1, nicht die vollständige Erfüllung ihrer Abnahmekriterien. Als Ziel für die erste etwa zweistündige Umsetzungssitzung wird ein durchgängiger Ablauf mit Angular und TypeScript im Browser, Spring Boot mit Kotlin und PostgreSQL über Docker Compose vorgesehen. Die tatsächlich erreichbare Umsetzung hängt von der vorhandenen Entwicklungsumgebung ab.
+
+Eine versionierte Datenbankmigration legt das Beispielprojekt „PrivatMartin“ und die Definition des Eintragstyps „Sport“ an. Über die Oberfläche kann ein Ticket „Mein Sport“ erstellt werden. An diesem Ticket lässt sich eine Sporterfassung mit Datum, Sportart, positiver Dauer in Minuten und optionaler Beschreibung speichern. Das Backend persistiert Tickets und Erfassungen in PostgreSQL; die Oberfläche zeigt die Erfassungen und die Summe ihrer Dauer am ausgewählten Ticket an. Typbezogene Felder werden entsprechend Abschnitt 2.1 gespeichert und serverseitig validiert.
+
+Abnahme für M1:
+1. Ein Ticket kann über Angular und die REST-API erstellt und wieder geladen werden.
+2. Eine Sporterfassung mit 120 Minuten lässt sich speichern und wird mit einer Summe von 2 Stunden angezeigt. Eine weitere Erfassung mit 30 Minuten erhöht die Summe auf 2 Stunden 30 Minuten.
+3. Nach Neuladen der Oberfläche sowie Neustart des Backends bleiben die Daten und die berechnete Summe erhalten.
+4. Eine Dauer von 0 oder einem negativen Wert wird serverseitig abgewiesen; die Oberfläche zeigt einen verständlichen Fehler und es wird keine ungültige Erfassung gespeichert.
+
+Electron, ein Editor für Eintragstypen, Anmeldung, Familienfreigaben, vollständige Änderungshistorie, Kalender, Wochenbericht und chip-pippin-Anbindung folgen nach M1. Bis Authentifizierung und Zugriffsschutz umgesetzt sind, wird M1 ausschließlich lokal mit Testdaten betrieben; es ist keine Freigabe für reale private oder betriebliche Daten. Das langfristige Ziel mit Electron und iPhone-Nutzung bleibt bestehen.
+
+Falls die Einrichtung den verfügbaren Zeitrahmen beansprucht, dient ein über Angular dauerhaft gespeichertes und wieder geladenes Ticket als Zwischenziel; M1 ist damit noch nicht vollständig abgenommen. Die Umsetzungsschritte und ihr Erledigungsstand werden in `doc_logUself/TODO.md` gepflegt, die tatsächlichen Start- und Prüfkommandos nach ihrer Einrichtung in `README.md` dokumentiert.
+
 ## 6. Bewusst nicht in Version 1 enthalten
 
 - Native iOS-App und App-Store-Veröffentlichung
