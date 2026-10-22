@@ -52,6 +52,8 @@ Jeder Ticket-Datensatz gehört genau einem Eintragstyp.
 
 Ein Eintragstyp definiert die typspezifische Datenstruktur: Feldnamen, Datentypen, Pflichtfelder und Validierungsregeln. Benutzer können diese Felder bei der Definition eines Eintragstyps festlegen. Die typspezifischen Felder ergänzen die gemeinsamen Grundfelder eines Tickets. Beispielsweise definiert der Eintragstyp Sport Felder für Sportart, Dauer und optionale Distanz; der Eintragstyp Ernährung definiert Felder für Kalorien, Mahlzeitenart und Bewertung. Die folgenden fachlichen Anforderungen beschreiben die vorgesehenen Datenfelder und Regeln für die jeweiligen Beispieltypen.
 
+Für auswertbare numerische Felder legt die Eintragstypdefinition zusätzlich die fachliche Bedeutung, Einheit und Aggregation fest, beispielsweise Zeitdauer in Minuten mit SUMME, Kalorien in kcal mit SUMME oder Bewertung auf einer Skala von 1 bis 5 mit DURCHSCHNITT. Auch ein gemeinsames Grundfeld wie die Zeitbuchungsdauer kann dafür referenziert werden; es wird nicht zusätzlich in JSONB gespeichert. Die Auswertung verwendet stabile Typ- und Feldschlüssel statt Anzeigenamen. Diese Angaben gehören zur versionierten Eintragstypdefinition.
+
 Eintragstypen bestimmen keine Zugriffsrechte. Diese werden über das zugehörige Projekt festgelegt. Eine zusätzliche Kategorieebene ist zunächst nicht vorgesehen.
 
 ### FR-01a: Projekte, Mitgliedschaften und Sichtbarkeit
@@ -152,16 +154,20 @@ Einträge lassen sich direkt aus dem Kalender erstellen und öffnen.
 ### FR-09: Wochenbericht
 
 Für eine frei wählbare Kalenderwoche wird ein Bericht erstellt mit:
-- Erfasster Lernzeit
-- Erfasster Sportzeit
-- Erfasste Quality Time
-- Erfasste Brain Rot Time
+- Dynamischer Auflistung der im zugänglichen Datenbestand definierten Eintragstypen, einschließlich selbst angelegter Typen; Typen ohne Einträge in der gewählten Woche werden als „Keine Einträge“ gekennzeichnet
+- Anzahl der Einträge je Eintragstyp
+- Summe der erfassten Zeitdauer je Eintragstyp, beispielsweise Arbeitszeit, Lernzeit oder Sportzeit, sofern ein entsprechendes Feld definiert ist
+- Arithmetischem Durchschnitt je Bewertungsfeld mit Anzeige der Skala und Anzahl der vorhandenen Bewertungen, beispielsweise Ernährung: 4,0 von 5 aus 3 Bewertungen
+- Weiteren in der Eintragstypdefinition festgelegten Summen, beispielsweise dokumentierten Kalorien
 - Zeitaufwand je Projekt
 - Abgeschlossenen Tickets
-- Ernährungseinträgen und dokumentierten Kalorien
 - Vergleich mit der Vorwoche, sofern Daten vorliegen
 
-Fehlende Daten werden von tatsächlichen Nullwerten unterschieden.
+Die Auswertung erfolgt pro Eintragstyp und Feld anhand der definierten Aggregation. Unterschiedliche Bewertungsfelder oder Skalen werden nicht zu einem gemeinsamen Durchschnitt zusammengefasst. Über Definitionsversionen hinweg werden Werte nur gemeinsam ausgewertet, wenn Feldschlüssel, Bedeutung, Einheit, Aggregation und gegebenenfalls Bewertungsskala übereinstimmen; andernfalls werden sie getrennt ausgewiesen.
+
+Fehlende Daten werden von tatsächlichen Nullwerten unterschieden. Fehlende Bewertungen gehen nicht als 0 in den Durchschnitt ein. Ohne vorhandene Werte wird „Keine Daten“ statt einer Summe oder eines Durchschnitts von 0 angezeigt. Beispielsweise ergeben die Bewertungen 3 und 5 sowie ein Eintrag ohne Bewertung einen Durchschnitt von 4,0 aus 2 Bewertungen. Durchschnitte werden für die Anzeige auf eine Nachkommastelle gerundet; Berechnungen verwenden die ungerundeten Werte.
+
+Jede Buchung wird je ausgewertetem Feld nur einmal berücksichtigt, auch wenn sie zusätzlich über ein Ticket verknüpft ist. Zeitaufwände je Projekt werden aus den zugrunde liegenden Buchungen berechnet, ohne diese durch die Gruppierung nach Eintragstyp erneut zu zählen. Vorwochenvergleiche setzen dieselbe fachliche Bedeutung, Einheit und gegebenenfalls Skala voraus.
 
 Der Bericht wird bei Aufruf aus den gespeicherten Daten berechnet. Kalender, Berichte und Summen berücksichtigen ausschließlich Projekte und Einträge, auf die der angemeldete Benutzer Zugriff hat.
 
@@ -203,6 +209,8 @@ Nach erfolgreicher Authentifizierung kann der Benutzer auf Laptop und iPhone auf
 11. Nach dem Entfernen eines Mitglieds oder dem Umstellen auf PRIVATE haben die betroffenen Benutzer keinen Zugriff mehr auf das Projekt und seine Daten, auch nicht über direkte API-Aufrufe, Kalender oder Berichte.
 12. Tickets und Einträge übernehmen die Zugriffsrechte ihres Projekts unabhängig von Projektname und Eintragstyp.
 13. Ein Benutzer kann einen Eintragstyp mit typspezifischen Feldern definieren. Bei der Erfassung werden die festgelegten Datentypen, Pflichtfelder und Validierungsregeln geprüft.
+14. Ein neu angelegter Eintragstyp erscheint ohne Programmänderung im Wochenbericht. Zwei Buchungen mit 30 und 45 Minuten ergeben für dessen Zeitfeld 75 Minuten; eine Umbenennung des Typs verändert das Ergebnis nicht.
+15. Für ein Bewertungsfeld mit der Skala 1 bis 5 ergeben die Werte 3 und 5 sowie eine fehlende Bewertung den Durchschnitt 4,0 aus 2 Bewertungen. Ohne Bewertungen wird „Keine Daten“ angezeigt.
 
 ## 6. Bewusst nicht in Version 1 enthalten
 
