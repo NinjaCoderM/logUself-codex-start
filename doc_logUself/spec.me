@@ -219,15 +219,25 @@ Nach erfolgreicher Authentifizierung kann der Benutzer auf Laptop und iPhone auf
 
 - Ein unmittelbar unter der eigenen Anmeldung beziehungsweise dem eigenen zugeordneten Chip ausgelöstes Kommen-, Gehen-, Pausenbeginn- oder Pausenende-Ereignis ist eine reguläre Erfassung und erzeugt keinen Eintrag in der Änderungshistorie. Es ergänzt ausschließlich die dafür noch offenen Felder beziehungsweise eine neue Pause und verändert keine bereits gespeicherten Zeitwerte.
 - Zeitlich versetzte Nachträge, Eingaben durch andere Personen und jede Korrektur oder Löschung bereits gespeicherter Zeitwerte werden immer historisiert. Das gilt auch für Requests von chip-pippin und auch dann, wenn der betroffene Arbeitnehmer die Korrektur selbst ausführt. Beispielsweise erscheint ein am nächsten Tag vom Vorarbeiter nachgetragener Pausenbeginn in der Historie.
-- Bereits kontrollierte Zeitdaten dürfen niemals ohne Historieneintrag verändert werden. Ein regulärer Folgevorgang, etwa das spätere Pausenende, darf einen zuvor kontrollierten Pausenbeginn nicht überschreiben.
+- Sobald ein Arbeitnehmer Daten geprüft und bestätigt hat, erzeugt jede nachfolgende Änderung an den bestätigten Datensätzen zwingend einen Historieneintrag, einschließlich Ergänzungen bislang offener Felder oder weiterer Pausen. Die Ausnahme für reguläre Zeitereignisse gilt für diese Datensätze nicht mehr. Neue, noch nicht bestätigte Arbeitstage sind davon nicht betroffen.
 
-Zur Unterscheidung übermittelt chip-pippin neben der technischen Identität die verlässlich zugeordnete auslösende Person, den Ereigniszeitpunkt und die Herkunft der Erfassung. logUself speichert zusätzlich den serverseitigen Eingangszeitpunkt. Eine technische Anmeldung von chip-pippin allein gilt nicht als eigene Anmeldung des Arbeitnehmers. Die Ausnahme wird serverseitig geprüft; eine frei gesetzte Kennzeichnung „regulär“ genügt nicht. Fehlt ein verlässlicher Nachweis für eine unmittelbare eigene Erfassung, wird der Vorgang historisiert. Die zulässige technische Übertragungsverzögerung und die Abbildung einer Datenkontrolle sind vor Umsetzung konkret festzulegen; sie dürfen keine nachträgliche Änderung gespeicherter Werte ohne Historie ermöglichen.
+Zur Unterscheidung übermittelt chip-pippin neben der technischen Identität die verlässlich zugeordnete auslösende Person, den Ereigniszeitpunkt und die Herkunft der Erfassung. logUself speichert zusätzlich den serverseitigen Eingangszeitpunkt. Eine technische Anmeldung von chip-pippin allein gilt nicht als eigene Anmeldung des Arbeitnehmers. Die Ausnahme wird serverseitig geprüft; eine frei gesetzte Kennzeichnung „regulär“ genügt nicht. Fehlt ein verlässlicher Nachweis für eine unmittelbare eigene Erfassung, wird der Vorgang historisiert. Die zulässige technische Übertragungsverzögerung ist vor Umsetzung konkret festzulegen; sie darf keine nachträgliche Änderung gespeicherter Werte ohne Historie ermöglichen.
 
 Die Historie wird serverseitig zusammen mit der Datenänderung gespeichert und kann über die Anwendung oder API weder nachträglich bearbeitet noch gelöscht werden, auch nicht durch Projektadministratoren. Das Löschen eines fachlichen Datensatzes entfernt nicht dessen Historie. Vergabe und Entzug von Projektrollen und Schreibrechten werden ebenfalls protokolliert. Abgewiesene Änderungsversuche verändern weder die fachlichen Daten noch erzeugen sie einen erfolgreichen Änderungseintrag.
+
+Bei einem Versionskonflikt wird zusätzlich ein ausdrücklich als abgewiesener Änderungsversuch gekennzeichneter Historieneintrag gespeichert. Er enthält den aktuellen Stand, die erwartete Version, die angeforderten Änderungen und die handelnde Identität; er darf nicht den Eindruck erwecken, die Änderungen seien übernommen worden. Eine E-Mail informiert den zuständigen Projektadministrator oder die Person, die den Änderungsversuch vorgenommen hat. Die Empfängerzuordnung ist vor Umsetzung festzulegen. Ein fehlgeschlagener E-Mail-Versand darf die Konfliktablehnung nicht aufheben; ausstehende Benachrichtigungen werden für einen erneuten Versand gespeichert.
 
 ### FR-12: Datenabbildung für chip-pippin und bau-codex-desk
 
 chip-pippin ist ein eigenständiges externes Softwareprojekt mit eigener fachlicher Logik. Es ist nicht mit einem gleichnamigen Projekt innerhalb von logUself gleichzusetzen.
+
+### FR-12a: Identität und Datenverantwortung
+
+Die Zuordnung von Mitarbeitern zu Chips und Anmeldungen sowie der Mitarbeiterzugriff werden in chip-pippin verwaltet. Requests referenzieren den betroffenen Mitarbeiter über einen stabilen externen Schlüssel und nennen getrennt davon die tatsächlich handelnde Person. Mitarbeiter und handelnde Person können verschieden sein, beispielsweise bei einer Korrektur durch einen berechtigten Büromitarbeiter in logUself. Eine solche manuelle Korrektur setzt die in logUself vergebenen Schreibrechte voraus.
+
+chip-pippin betreibt vorerst keine eigene dauerhafte fachliche Datenhaltung. Die verbindlichen Daten liegen je Datenart entweder in logUself oder im SachProjekt. Für die in logUself verwalteten Mitarbeiter-Tickets und Arbeitstage ist dort der aktuelle Stand abrufbar; chip-pippin darf keine veraltete lokale Kopie über Korrekturen schreiben. Die genaue Bedeutung von „SachProjekt“, die Zuordnung der übrigen Datenarten zu ihrem verbindlichen Speicherort und ein gegebenenfalls erforderlicher systemübergreifender Austausch sind noch festzulegen.
+
+### FR-12b: Einrichtung und Zeitereignisse
 
 Über authentifizierte und autorisierte API-Requests kann chip-pippin in logUself prüfen, ob das Projekt „Zeiterfassung“, die benötigte Eintragstypdefinition „Mitarbeiter“ und das jeweilige Mitarbeiter-Ticket, beispielsweise „John Doe“, vorhanden sind. Fehlende Objekte werden über die API erstellt. Die Wiedererkennung erfolgt über stabile technische beziehungsweise externe Schlüssel im berechtigten Bereich, nicht allein über Anzeigenamen. Wiederholte Einrichtungsrequests dürfen keine Duplikate erzeugen.
 
@@ -253,7 +263,27 @@ Vom Projektadministrator mit Schreibrechten ausgestattete Benutzer können diese
 
 chip-pippin und bau-codex-desk können mit entsprechenden Leserechten den aktuellen gespeicherten Stand über die API abrufen. Teilaktualisierungen müssen andere bereits gespeicherte Angaben erhalten; gleichzeitige Änderungen dürfen nicht stillschweigend überschrieben werden und müssen über Versionsprüfung als Konflikt erkennbar sein. Schreibrechte werden für jeden Request serverseitig geprüft, einschließlich nach ihrem Entzug.
 
+Jedes Zeitereignis erhält innerhalb seiner Quellintegration eine eindeutige Ereignis-ID. Die erneute Übertragung derselben ID mit demselben Inhalt liefert das bereits gespeicherte Ergebnis und erzeugt weder eine zweite Pause oder Buchung noch zusätzliche Historieneinträge. Dieselbe ID mit abweichendem Inhalt wird als Konflikt abgewiesen. Nach einem Versionskonflikt muss der aktuelle Stand geladen und eine beabsichtigte Änderung erneut auf dieser Basis geprüft werden; ein automatisches Überschreiben erfolgt nicht.
+
 Berechnung der Nettoarbeitszeit, fachliche Vollständigkeitsprüfungen und der Vergleich mit auf Arbeitsprojekte gebuchten Zeiten erfolgen in chip-pippin beziehungsweise der zuständigen externen Anwendung. logUself führt diese Logik nicht aufgrund eines Projekt- oder Typnamens aus. Allgemeine Summen und Durchschnitte nach FR-09 bleiben verfügbar; externe Berechnungsergebnisse werden dort nur berücksichtigt, wenn sie ausdrücklich als auswertbare Werte bereitgestellt und definiert sind. Anwesenheitszeit und Projektzeitzuordnungen werden nicht zu einer gemeinsamen Gesamtarbeitszeit addiert.
+
+### FR-12c: Prüfung und Bestätigung durch den Arbeitnehmer
+
+Der Arbeitnehmer prüft seine Einträge in chip-pippin. Er wählt per Checkbox den letzten geprüften Eintrag aus und bestätigt nach einer Hinweismeldung die Prüfung aller zugehörigen Einträge bis einschließlich dieser Auswahl. chip-pippin übermittelt dafür eine eindeutige Liste der betroffenen Datensätze und ihrer geprüften Versionen. Bestätigung, Arbeitnehmeridentität, Zeitpunkt und Umfang werden dauerhaft in logUself gespeichert. Die Bestätigung muss sich auf den tatsächlich angezeigten Stand beziehen; zwischenzeitlich geänderte Versionen erfordern eine erneute Anzeige und Bestätigung.
+
+Jede spätere Änderung oder Ergänzung eines bestätigten Datensatzes erscheint zwingend in der Historie und wird als „Seit der letzten Prüfung geändert“ erkennbar. Die ursprüngliche Bestätigung bleibt erhalten, gilt jedoch nicht als Zustimmung zum veränderten Stand. Dies gilt für sämtliche Benutzer, Administratoren und API-Integrationen, auch für reguläre Folgeereignisse von chip-pippin.
+
+Urlaub muss durch einen Vorarbeiter in chip-pippin bestätigt werden. Speicherort, Statusmodell und Regeln für Änderungen nach einer Urlaubsfreigabe sind noch gesondert zu spezifizieren.
+
+### FR-12d: Registrierung und verbindliche fachliche Prüfung
+
+Bei der Installation registriert sich chip-pippin authentifiziert bei logUself als zuständiger fachlicher Prüfdienst für seine zugeordneten Zeiterfassungsdaten. Die Registrierung hinterlegt die Zuordnung und eine erreichbare Prüfschnittstelle. Die konkrete technische Erreichbarkeit und das Prüfprotokoll sind vor Umsetzung festzulegen.
+
+Vor einer solchen Registrierung kann logUself für Mitarbeiter-Arbeitstage einen lokalen Sanity-Check verwenden: Ein vorhandenes Arbeitsende liegt nach dem Arbeitsbeginn, jede Pause beginnt frühestens mit dem Arbeitsbeginn, ein vorhandenes Pausenende liegt nach dem Pausenbeginn, Pausen überschneiden sich nicht und liegen bei vorhandenem Arbeitsende vollständig innerhalb der Arbeitszeit. Fehlendes Arbeitsende und eine laufende Pause ohne Ende bleiben zulässige Zwischenstände.
+
+Nach erfolgreicher Registrierung ist für diese Daten ausschließlich die fachliche Prüfung durch chip-pippin maßgeblich. Ein lokaler Sanity-Check als Ersatzprüfung ist nicht mehr erlaubt, auch nicht bei vorübergehender Nichterreichbarkeit. Allgemeine Authentifizierungs-, Berechtigungs-, Struktur- und Versionsprüfungen durch logUself bleiben erforderlich.
+
+Vor der Übernahme einer Erfassung oder Änderung muss die Prüfung durch den registrierten Dienst erfolgreich sein und sich auf den zu speichernden Datenstand beziehen. Ist chip-pippin vorübergehend nicht erreichbar, läuft die Anfrage in einen Timeout oder schlägt die Prüfung fehl, zeigt logUself eine verständliche Fehlermeldung und übernimmt die Änderung nicht. Es erfolgt weder eine Ersatzfreigabe durch Sanity-Check noch eine Speicherung als „fachliche Prüfung ausstehend“. Bestehende Daten bleiben lesbar und unverändert. Ein von chip-pippin selbst ausgelöster Schreibrequest muss ebenfalls eine verlässlich nachweisbare erfolgreiche Prüfung seines Inhalts mitbringen oder den vereinbarten Prüfdienst verwenden; eine rekursive Prüfaufrufkette ist zu vermeiden.
 
 ## 4. Nichtfunktionale Anforderungen
 
@@ -290,6 +320,10 @@ Berechnung der Nettoarbeitszeit, fachliche Vollständigkeitsprüfungen und der V
 22. Ein berechtigter chip-pippin-Request kann eine offene Pause an einem bestehenden Arbeitstag anlegen und ein weiterer deren Ende ergänzen. Nach dem Entzug der technischen Schreibrechte werden weitere Schreibrequests abgewiesen; vorhandene Daten bleiben unverändert.
 23. Ein unmittelbar vom Arbeitnehmer mit eigener Anmeldung beziehungsweise eigenem Chip ausgelöster Pausenbeginn wird gespeichert, ohne einen Änderungshistorieneintrag zu erzeugen. Das spätere reguläre Pausenende ergänzt nur das offene Ende. Ein Überschreiben des gespeicherten Beginns wird dagegen auch über denselben API-Zugang historisiert.
 24. Eine Änderung bereits kontrollierter Zeitwerte erzeugt zwingend einen Historieneintrag, unabhängig davon, ob sie vom Arbeitnehmer, einem Vorarbeiter, einem Administrator oder chip-pippin ausgelöst wird. Ein Request ohne verlässlichen Nachweis der unmittelbaren eigenen Erfassung erhält die Ausnahme von der Historisierung nicht.
+25. Nach der Mitarbeiterbestätigung erzeugt auch das erstmalige Ergänzen eines offenen Endes oder einer weiteren Pause am bestätigten Datensatz einen Historieneintrag. Der neue Stand ist als seit der Prüfung geändert erkennbar; die Bestätigung der vorherigen Version bleibt erhalten.
+26. Bei gleichzeitigen Änderungen wird ein veraltetes Update abgewiesen, als Konfliktversuch historisiert und eine E-Mail an den zugeordneten Administrator oder die handelnde Person ausgelöst. Erfolgreich gespeicherte Werte werden nicht überschrieben.
+27. Die wiederholte Übertragung desselben Zeitereignisses erzeugt keine zusätzlichen Daten oder Historieneinträge; ein abweichender Inhalt mit derselben Ereignis-ID wird abgewiesen.
+28. Vor Registrierung von chip-pippin lässt der Sanity-Check offene Arbeitstage zu und weist überlappende Pausen oder vorhandene Endzeitpunkte vor Beginn zurück. Nach Registrierung darf dieser Check keine Ersatzfreigabe mehr liefern: Ist der Prüfdienst nicht erreichbar, erscheint eine Fehlermeldung und der Änderungsversuch verändert keine fachlichen Daten.
 
 ## 6. Bewusst nicht in Version 1 enthalten
 
