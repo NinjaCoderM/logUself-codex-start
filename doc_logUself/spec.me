@@ -35,7 +35,7 @@ PostgreSQL bleibt die zentrale Datenbank. Für dynamische Datenstrukturen wird d
 
 Das Backend validiert typspezifische Werte vor jeder Speicherung anhand der zugehörigen Eintragstypdefinition. Das gilt auch für direkte API-Aufrufe. JSONB allein prüft nicht die fachlichen Pflichtfelder oder Validierungsregeln eines Eintragstyps.
 
-Eintragstypdefinitionen werden versioniert; gespeicherte Einträge referenzieren die zugehörige Definitionsversion. Änderungen an Datentypen, Pflichtfeldern oder Feldschlüsseln dürfen vorhandene Daten nicht stillschweigend verändern oder unlesbar machen. Eine Überführung bestehender Einträge auf eine neue Definition erfordert eine explizite, validierte Migration.
+Eintragstypdefinitionen werden versioniert; Tickets und ihre strukturierten Erfassungen referenzieren die jeweils zugehörige Definitionsversion. Änderungen an Datentypen, Pflichtfeldern oder Feldschlüsseln dürfen vorhandene Daten nicht stillschweigend verändern oder unlesbar machen. Eine Überführung bestehender Daten auf eine neue Definition erfordert eine explizite, validierte Migration.
 
 Indizes werden passend zu den tatsächlichen Zugriffsmustern angelegt: insbesondere auf Projektzuordnung, Eintragstyp und Datum sowie bei Bedarf auf häufig abgefragte JSONB-Felder. Die Wahl zwischen gezielten Ausdrucksindizes und GIN-Indizes richtet sich nach den verwendeten Abfragen; nicht jedes dynamische Feld wird automatisch indexiert.
 
@@ -50,21 +50,33 @@ Die Eintragstypen sind dynamisch und können vom Benutzer angelegt und umbenannt
 - Quality Time
 - Brain Rot Time
 
-Jeder Eintrag gehört genau einem Eintragstyp und einem Projekt. Ein Ticket ist ein aufgabenbezogener Eintrag mit dem in FR-02 beschriebenen Statusmodell. Andere typisierte Einträge, beispielsweise ein Mitarbeiter, können ohne Ticket existieren und benötigen keinen Aufgabenstatus.
+Das gemeinsame Modell lautet: Projekt → Ticket mit Eintragstyp → strukturierte Erfassungen. Jedes Ticket gehört genau einem Projekt und einem Eintragstyp. Der Eintragstyp ist die Vorlage für Felder und Erfassungsmöglichkeiten eines Tickets. Es gibt keine zusätzliche, von Tickets getrennte Hauptobjektart „Eintrag“.
 
-Ein Eintragstyp definiert die typspezifische Datenstruktur: Feldnamen, Datentypen, Pflichtfelder und Validierungsregeln. Benutzer können diese Felder bei der Definition eines Eintragstyps festlegen. Die typspezifischen Felder ergänzen die gemeinsamen Grundfelder eines Tickets. Beispielsweise definiert der Eintragstyp Sport Felder für Sportart, Dauer und optionale Distanz; der Eintragstyp Ernährung definiert Felder für Kalorien, Mahlzeitenart und Bewertung. Die folgenden fachlichen Anforderungen beschreiben die vorgesehenen Datenfelder und Regeln für die jeweiligen Beispieltypen.
+Beispiele für **Projekt → Ticket mit Eintragstyp → Erfassungen**:
+
+|                         | Sport                                                                    | Mitarbeiter                              |
+| ----------------------- | ------------------------------------------------------------------------ | ---------------------------------------- |
+| Projekt                 | PrivatMartin                                                             | Zeiterfassung                            |
+| Ticket                  | Beispielsweise „Mein Sport“                                              | John Doe                                 |
+| Eintragstyp des Tickets  | Sport                                                                    | Mitarbeiter                              |
+| Erfassungsaktion        | „Zeit erfassen“                                                          | „Tag hinzufügen“                         |
+| Erfasste Daten          | 2 h am 22.10.2006, Garmin-Trainingszustand: 85 Punkte, Intensitätsminuten: 44 | Datum, Beginn, Ende, mehrere Pausen       |
+
+Ein Eintragstyp definiert die typspezifische Datenstruktur: Feldnamen, Datentypen, Pflichtfelder und Validierungsregeln. Benutzer legen dabei fest, welche Felder zum Ticket selbst und welche zu dessen wiederholbaren Erfassungen gehören. Ticketfelder ergänzen die gemeinsamen Grundfelder eines Tickets. Beispielsweise definiert der Eintragstyp Sport Erfassungsfelder für Sportart, Dauer und optionale Distanz; der Eintragstyp Ernährung definiert Erfassungsfelder für Kalorien, Mahlzeitenart und Bewertung. Die folgenden fachlichen Anforderungen beschreiben die vorgesehenen Datenfelder und Regeln für die jeweiligen Beispieltypen.
 
 Für auswertbare numerische Felder legt die Eintragstypdefinition zusätzlich die fachliche Bedeutung, Einheit und Aggregation fest, beispielsweise Zeitdauer in Minuten mit SUMME, Kalorien in kcal mit SUMME oder Bewertung auf einer Skala von 1 bis 5 mit DURCHSCHNITT. Auch ein gemeinsames Grundfeld wie die Zeitbuchungsdauer kann dafür referenziert werden; es wird nicht zusätzlich in JSONB gespeichert. Die Auswertung verwendet stabile Typ- und Feldschlüssel statt Anzeigenamen. Diese Angaben gehören zur versionierten Eintragstypdefinition.
 
 Eintragstypen bestimmen keine Zugriffsrechte. Diese werden über das zugehörige Projekt festgelegt. Eine zusätzliche Kategorieebene ist zunächst nicht vorgesehen.
 
-Eintragstypdefinitionen unterstützen auch untergeordnete Datensätze und wiederholbare Feldgruppen. So kann ein Mitarbeitereintrag mehrere Arbeitstage enthalten und jeder Arbeitstag mehrere Pausen. Untergeordnete Datensätze besitzen stabile IDs und übernehmen die Projektzuordnung und Zugriffsrechte ihres übergeordneten Eintrags. Eltern-Kind-Beziehungen werden relational abgesichert; dynamische Werte und wiederholbare Feldgruppen können gemäß Abschnitt 2.1 in JSONB gespeichert werden.
+Eintragstypdefinitionen unterstützen strukturierte Erfassungen und wiederholbare Feldgruppen. So kann ein Mitarbeiter-Ticket mehrere Arbeitstage enthalten und jeder Arbeitstag mehrere Pausen. Erfassungen und untergeordnete Datensätze besitzen stabile IDs und übernehmen die Projektzuordnung und Zugriffsrechte ihres Tickets. Eltern-Kind-Beziehungen werden relational abgesichert; dynamische Werte und wiederholbare Feldgruppen können gemäß Abschnitt 2.1 in JSONB gespeichert werden.
+
+Erfassungen können wie Kommentare chronologisch am Ticket angezeigt werden und eine Freitextbeschreibung enthalten, beispielsweise „2 h – Chip-Lesegerät reparieren“. Datum, Dauer, Bewertungen und weitere auswertbare Werte werden dabei in strukturierten Feldern gespeichert. Für eine solche Erfassung ist kein zusätzliches Aufgaben-Ticket erforderlich.
 
 Die Typdefinition kann generische Erfassungsaktionen mit Bezeichnung und zugehöriger Datenstruktur vorgeben: beim Typ Mitarbeiter beispielsweise „Tag hinzufügen“, bei anderen Typen „Zeiten erfassen“. logUself stellt dafür passende Formulare und API-Operationen bereit. Diese Konfiguration enthält keinen frei ausführbaren Programmcode und verlagert keine externe Geschäftslogik nach logUself.
 
 ### FR-01a: Projekte, Mitgliedschaften und Sichtbarkeit
 
-Ein Projekt bündelt typisierte Einträge einschließlich Tickets und besitzt mindestens:
+Ein Projekt bündelt Tickets und besitzt mindestens:
 - Eindeutige ID
 - Frei wählbaren Namen
 - Eigentümer
@@ -76,9 +88,9 @@ Benutzer können Projekte erstellen und deren Namen bearbeiten. Neue Projekte si
 - PRIVATE: Nur der Eigentümer hat Zugriff auf das Projekt und seine Daten.
 - SHARED: Der Eigentümer und die ausdrücklich zugeteilten Projektmitglieder haben Zugriff auf das Projekt und seine Daten.
 
-Der Eigentümer kann die Sichtbarkeit ändern sowie Projektmitglieder hinzufügen und entfernen. Projektmitglieder dürfen Tickets und Einträge im gemeinsamen Projekt lesen, erstellen und bearbeiten. Die Mitgliedschaft in einer Familie allein gewährt keinen Zugriff auf private oder andere nicht freigegebene Projekte. Nach dem Entfernen einer Mitgliedschaft entfällt der Zugriff; bestehende Projektdaten bleiben erhalten.
+Der Eigentümer kann die Sichtbarkeit ändern sowie Projektmitglieder hinzufügen und entfernen. Projektmitglieder dürfen Tickets und deren Erfassungen im gemeinsamen Projekt lesen, erstellen und bearbeiten. Die Mitgliedschaft in einer Familie allein gewährt keinen Zugriff auf private oder andere nicht freigegebene Projekte. Nach dem Entfernen einer Mitgliedschaft entfällt der Zugriff; bestehende Projektdaten bleiben erhalten.
 
-Jedes Ticket gehört genau einem Projekt und übernimmt dessen Zugriffsrechte. Zugehörige Zeitbuchungen und weitere Einträge übernehmen ebenfalls die Zugriffsrechte des Projekts. Einträge ohne Ticketreferenz müssen direkt einem Projekt zugeordnet werden.
+Jedes Ticket gehört genau einem Projekt und übernimmt dessen Zugriffsrechte. Jede Erfassung, einschließlich Zeitbuchung, Sportaktivität, Ernährungserfassung oder Arbeitstag, gehört genau einem Ticket und übernimmt dessen Projektzuordnung und Zugriffsrechte. Erfassungen ohne Ticketreferenz sind nicht vorgesehen.
 
 Beispiele sind ein privates Projekt „Meine Aktivitäten“, ein gemeinsames Projekt „Familienalltag“ oder ein Unternehmensprojekt „Baustelle A“ mit zugeteilten Mitarbeitern.
 
@@ -91,15 +103,15 @@ Ein Ticket besitzt mindestens:
 - Eintragstyp
 - Projekt
 - Erstellungsdatum
-- Status
-- Optionales Abschlussdatum
+- Optionalen Status gemäß Eintragstypdefinition
+- Optionales Abschlussdatum bei Verwendung eines Abschlussstatus
 
-Mögliche Statuswerte:
+Die Eintragstypdefinition legt fest, ob ein Ticket einen Aufgabenstatus verwendet. Für Typen mit Aufgabenstatus stehen folgende Werte zur Verfügung:
 - OPEN
 - IN_PROGRESS
 - CLOSED
 
-Tickets können erstellt, bearbeitet, gefiltert und geschlossen werden. Geschlossene Tickets bleiben für historische Auswertungen verfügbar.
+Tickets können erstellt, bearbeitet und gefiltert werden. Tickets mit Aufgabenstatus können geschlossen werden und bleiben für historische Auswertungen verfügbar. Dauerhafte Tickets wie „John Doe“ oder „Mein Sport“ benötigen keinen Aufgabenstatus und können fortlaufend Erfassungen erhalten.
 
 ### FR-03: Zeitbuchungen
 
@@ -108,45 +120,51 @@ Zu einem Ticket können mehrere Zeitbuchungen erfasst werden.
 Eine Zeitbuchung enthält:
 - Ticketreferenz
 - Datum
-- Dauer in Minuten - nicht bei Ernährung
+- Dauer in Minuten
 - Beschreibung
 
 Zeitbuchungen können bearbeitet und gelöscht werden. Die Dauer muss positiv sein. Die Anwendung zeigt Summen pro Tag, Kalenderwoche und Ticket an.
 
 Diese Dauerpflicht gilt für die hier beschriebenen Dauerbuchungen, nicht für die schrittweise ergänzten Arbeitstage nach FR-12. Ein Arbeitstag ist keine zusätzliche Dauerbuchung und wird nicht automatisch ein zweites Mal als Zeitaufwand gezählt.
 
-### FR-04: Sportaktivitäten Zeitbuchung Zusatz
+Zeitbuchungen sind strukturierte Erfassungen am Ticket. Andere Erfassungsarten, beispielsweise Ernährung, benötigen keine Dauer; ihre Felder bestimmt die Eintragstypdefinition.
+
+### FR-04: Sporterfassungen am Ticket
 
 Sportaktivitäten enthalten:
+- Verpflichtende Ticketreferenz
 - Datum
 - Sportart
 - Dauer in Minuten
 - Optional: Distanz in Kilometern
-- Optional: Beschreibung und Ticketreferenz
+- Optional: Beschreibung
 - Optional: Garmin Intensitätsminuten 
 - Optional: Garmin Leistung
 - Optional: Belastung, Nutzen
 
 Sportzeiten fließen in den Wochenbericht ein. Die Anwendung vermeidet eine doppelte Anrechnung derselben Aktivität.
 
-### FR-05: Ernährung Zeitbuchung ohne Dauer Zusatz - auch meherere pro Tag
+### FR-05: Ernährungserfassungen am Ticket ohne Dauer
 
-Ein Ernährungseintrag enthält: 
+Eine Ernährungserfassung enthält:
+- Verpflichtende Ticketreferenz
 - Datum
 - Kalorien
 - Beschreibung
 - Optional: Mahlzeitenart
 - Optional: Bewertung von 1 bis 5
 
-Mehrere Einträge pro Tag sind zulässig. Die Anwendung versucht Ernährungsumstellungen zu dokumentieren und bewertet die Vollständigkeit der Datenerhebung. 
-z.B. jeden Tag ein Eintrag, Bewertungen vorhanden, Durchschnitt der Bewertung
+Mehrere Ernährungserfassungen pro Tag und Ticket sind zulässig. Die Anwendung versucht Ernährungsumstellungen zu dokumentieren und bewertet die Vollständigkeit der Datenerhebung.
+z.B. jeden Tag eine Erfassung, Bewertungen vorhanden, Durchschnitt der Bewertung
 
-### FR-06: Quality Time Zeitbuchung Zusatz
+### FR-06: Quality-Time-Erfassungen am Ticket
+- Verpflichtende Ticketreferenz
 - Datum
 - Art
 - Dauer in Minuten
 
-### FR-07: Brain Rot Time 
+### FR-07: Brain-Rot-Time-Erfassungen am Ticket
+- Verpflichtende Ticketreferenz
 - Datum
 - Art
 - Dauer in Minuten
@@ -155,29 +173,29 @@ z.B. jeden Tag ein Eintrag, Bewertungen vorhanden, Durchschnitt der Bewertung
 
 Die Anwendung stellt eine Kalenderansicht mit Tages- und Wochenansicht bereit. Es soll als Rückblick alle gebuchten Zeiten anzeigen. 
 
-Für ein ausgewähltes Datum werden die zugehörigen Tickets, Zeitbuchungen, Sportaktivitäten und Ernährungseinträge angezeigt.
+Für ein ausgewähltes Datum werden die zugehörigen Tickets und deren datierte Erfassungen angezeigt, beispielsweise Zeitbuchungen, Sportaktivitäten, Ernährungserfassungen und Arbeitstage.
 
-Einträge lassen sich direkt aus dem Kalender erstellen und öffnen.
+Erfassungen lassen sich direkt aus dem Kalender für ein bestehendes Ticket erstellen und öffnen; das zugehörige Ticket kann ebenfalls geöffnet werden.
 
 ### FR-09: Wochenbericht
 
 Für eine frei wählbare Kalenderwoche wird ein Bericht erstellt mit:
-- Dynamischer Auflistung der im zugänglichen Datenbestand definierten Eintragstypen, einschließlich selbst angelegter Typen; Typen ohne Einträge in der gewählten Woche werden als „Keine Einträge“ gekennzeichnet
-- Anzahl der Einträge je Eintragstyp
+- Dynamischer Auflistung der im zugänglichen Datenbestand definierten Eintragstypen, einschließlich selbst angelegter Typen; Typen ohne Erfassungen in der gewählten Woche werden als „Keine Erfassungen“ gekennzeichnet
+- Anzahl der Erfassungen in der gewählten Woche je Eintragstyp und separat Anzahl der zugehörigen Tickets mit diesen Erfassungen
 - Summe der erfassten Zeitdauer je Eintragstyp, beispielsweise Arbeitszeit, Lernzeit oder Sportzeit, sofern ein entsprechendes Feld definiert ist
 - Arithmetischem Durchschnitt je Bewertungsfeld mit Anzeige der Skala und Anzahl der vorhandenen Bewertungen, beispielsweise Ernährung: 4,0 von 5 aus 3 Bewertungen
 - Weiteren in der Eintragstypdefinition festgelegten Summen, beispielsweise dokumentierten Kalorien
 - Zeitaufwand je Projekt
-- Abgeschlossenen Tickets
+- In der gewählten Woche abgeschlossenen Tickets, sofern deren Typ einen Aufgabenstatus verwendet
 - Vergleich mit der Vorwoche, sofern Daten vorliegen
 
-Die Auswertung erfolgt pro Eintragstyp und Feld anhand der definierten Aggregation. Unterschiedliche Bewertungsfelder oder Skalen werden nicht zu einem gemeinsamen Durchschnitt zusammengefasst. Über Definitionsversionen hinweg werden Werte nur gemeinsam ausgewertet, wenn Feldschlüssel, Bedeutung, Einheit, Aggregation und gegebenenfalls Bewertungsskala übereinstimmen; andernfalls werden sie getrennt ausgewiesen.
+Die Auswertung erfolgt auf Basis der datierten Erfassungen pro Eintragstyp des zugehörigen Tickets und Erfassungsfeld anhand der definierten Aggregation. Ticket-Stammdaten werden nicht für jede Erfassung erneut summiert. Unterschiedliche Bewertungsfelder oder Skalen werden nicht zu einem gemeinsamen Durchschnitt zusammengefasst. Über Definitionsversionen hinweg werden Werte nur gemeinsam ausgewertet, wenn Feldschlüssel, Bedeutung, Einheit, Aggregation und gegebenenfalls Bewertungsskala übereinstimmen; andernfalls werden sie getrennt ausgewiesen.
 
-Fehlende Daten werden von tatsächlichen Nullwerten unterschieden. Fehlende Bewertungen gehen nicht als 0 in den Durchschnitt ein. Ohne vorhandene Werte wird „Keine Daten“ statt einer Summe oder eines Durchschnitts von 0 angezeigt. Beispielsweise ergeben die Bewertungen 3 und 5 sowie ein Eintrag ohne Bewertung einen Durchschnitt von 4,0 aus 2 Bewertungen. Durchschnitte werden für die Anzeige auf eine Nachkommastelle gerundet; Berechnungen verwenden die ungerundeten Werte.
+Fehlende Daten werden von tatsächlichen Nullwerten unterschieden. Fehlende Bewertungen gehen nicht als 0 in den Durchschnitt ein. Ohne vorhandene Werte wird „Keine Daten“ statt einer Summe oder eines Durchschnitts von 0 angezeigt. Beispielsweise ergeben die Bewertungen 3 und 5 sowie eine Erfassung ohne Bewertung einen Durchschnitt von 4,0 aus 2 Bewertungen. Durchschnitte werden für die Anzeige auf eine Nachkommastelle gerundet; Berechnungen verwenden die ungerundeten Werte.
 
-Jede Buchung wird je ausgewertetem Feld nur einmal berücksichtigt, auch wenn sie zusätzlich über ein Ticket verknüpft ist. Zeitaufwände je Projekt werden aus den zugrunde liegenden Buchungen berechnet, ohne diese durch die Gruppierung nach Eintragstyp erneut zu zählen. Vorwochenvergleiche setzen dieselbe fachliche Bedeutung, Einheit und gegebenenfalls Skala voraus.
+Jede Erfassung wird je ausgewertetem Feld nur einmal berücksichtigt. Zeitaufwände je Projekt werden aus den zugrunde liegenden Erfassungen berechnet, ohne diese durch die Gruppierung nach Ticket und Eintragstyp erneut zu zählen. Vorwochenvergleiche setzen dieselbe fachliche Bedeutung, Einheit und gegebenenfalls Skala voraus.
 
-Der Bericht wird bei Aufruf aus den gespeicherten Daten berechnet. Kalender, Berichte und Summen berücksichtigen ausschließlich Projekte und Einträge, auf die der angemeldete Benutzer Zugriff hat.
+Der Bericht wird bei Aufruf aus den gespeicherten Daten berechnet. Kalender, Berichte und Summen berücksichtigen ausschließlich Projekte, Tickets und Erfassungen, auf die der angemeldete Benutzer Zugriff hat.
 
 ### FR-10: Geräteübergreifende Nutzung
 
@@ -197,11 +215,12 @@ Nach erfolgreicher Authentifizierung kann der Benutzer auf Laptop und iPhone auf
 
 chip-pippin ist ein eigenständiges externes Softwareprojekt mit eigener fachlicher Logik. Es ist nicht mit einem gleichnamigen Projekt innerhalb von logUself gleichzusetzen.
 
-Über authentifizierte und autorisierte API-Requests kann chip-pippin in logUself prüfen, ob das Projekt „Zeiterfassung“, die benötigte Eintragstypdefinition „Mitarbeiter“ und der jeweilige Mitarbeitereintrag, beispielsweise „John Doe“, vorhanden sind. Fehlende Objekte werden über die API erstellt. Die Wiedererkennung erfolgt über stabile technische beziehungsweise externe Schlüssel im berechtigten Bereich, nicht allein über Anzeigenamen. Wiederholte Einrichtungsrequests dürfen keine Duplikate erzeugen.
+Über authentifizierte und autorisierte API-Requests kann chip-pippin in logUself prüfen, ob das Projekt „Zeiterfassung“, die benötigte Eintragstypdefinition „Mitarbeiter“ und das jeweilige Mitarbeiter-Ticket, beispielsweise „John Doe“, vorhanden sind. Fehlende Objekte werden über die API erstellt. Die Wiedererkennung erfolgt über stabile technische beziehungsweise externe Schlüssel im berechtigten Bereich, nicht allein über Anzeigenamen. Wiederholte Einrichtungsrequests dürfen keine Duplikate erzeugen.
 
-Das Datenmodell lautet: Projekt „Zeiterfassung“ → Eintrag vom Typ „Mitarbeiter“ → Arbeitstage → mehrere Pausen je Arbeitstag. Der Mitarbeitereintrag repräsentiert die Person und ist unabhängig von einem Ticket. Ein Mitarbeiter benötigt dafür nicht zwingend ein eigenes logUself-Benutzerkonto.
+Das Datenmodell lautet: Projekt „Zeiterfassung“ → Mitarbeiter-Ticket vom Eintragstyp „Mitarbeiter“ → Arbeitstage als strukturierte Erfassungen → mehrere Pausen je Arbeitstag. Das Mitarbeiter-Ticket repräsentiert die Person; ein zusätzliches Ticket ist nicht erforderlich. Ein Mitarbeiter benötigt dafür nicht zwingend ein eigenes logUself-Benutzerkonto.
 
-Über „Tag hinzufügen“ wird unter dem Mitarbeiter ein Arbeitstag mit folgenden Daten angelegt:
+Über „Tag hinzufügen“ wird am Mitarbeiter-Ticket ein Arbeitstag mit folgenden Daten angelegt:
+- Verpflichtende Referenz auf das Mitarbeiter-Ticket
 - Eindeutige ID und Datum
 - Arbeitsbeginn als Zeitpunkt
 - Optionales Arbeitsende als Zeitpunkt
@@ -231,24 +250,25 @@ Berechnung der Nettoarbeitszeit, fachliche Vollständigkeitsprüfungen und der V
 
 ## 5. Abnahmekriterien für Version 1
 
-1. Ein Ticket kann erstellt und geschlossen werden.
+1. Ein Ticket kann erstellt werden. Bei einem Typ mit Aufgabenstatus kann es geschlossen werden; ein Typ ohne Aufgabenstatus lässt sich ohne Status und Abschlussdatum verwenden.
 2. Für ein bestehendes Ticket können mehrere Zeitbuchungen angelegt werden.
-3. Sport- und Ernährungseinträge können für ein Datum erfasst werden.
-4. Die Tages- und Wochensummen stimmen mit den gespeicherten Einträgen überein.
+3. Sport- und Ernährungserfassungen können für ein Datum an einem Ticket des passenden Eintragstyps angelegt werden.
+4. Die Tages- und Wochensummen stimmen mit den gespeicherten Erfassungen überein.
 5. Ein geschlossener Vorgang bleibt in historischen Berichten sichtbar.
 6. Eine auf dem iPhone gespeicherte Änderung ist nach der Synchronisierung am Laptop sichtbar.
-7. Der Wochenbericht unterscheidet fehlende Ernährungseinträge von erfassten Nullwerten.
+7. Der Wochenbericht unterscheidet fehlende Ernährungserfassungen von erfassten Nullwerten.
 8. Nicht angemeldete Benutzer erhalten keinen Zugriff auf private Daten.
-9. Ein Benutzer kann ein privates Projekt erstellen; andere Benutzer können weder auf das Projekt noch auf dessen Tickets und Einträge zugreifen.
-10. Der Eigentümer kann ein Projekt teilen und Mitglieder hinzufügen. Mitglieder können dessen Tickets und Einträge lesen, erstellen und bearbeiten.
+9. Ein Benutzer kann ein privates Projekt erstellen; andere Benutzer können weder auf das Projekt noch auf dessen Tickets und Erfassungen zugreifen.
+10. Der Eigentümer kann ein Projekt teilen und Mitglieder hinzufügen. Mitglieder können dessen Tickets und Erfassungen lesen, erstellen und bearbeiten.
 11. Nach dem Entfernen eines Mitglieds oder dem Umstellen auf PRIVATE haben die betroffenen Benutzer keinen Zugriff mehr auf das Projekt und seine Daten, auch nicht über direkte API-Aufrufe, Kalender oder Berichte.
-12. Tickets und Einträge übernehmen die Zugriffsrechte ihres Projekts unabhängig von Projektname und Eintragstyp.
+12. Tickets und ihre Erfassungen übernehmen die Zugriffsrechte ihres Projekts unabhängig von Projektname und Eintragstyp. Jede Erfassung besitzt eine gültige Ticketreferenz.
 13. Ein Benutzer kann einen Eintragstyp mit typspezifischen Feldern definieren. Bei der Erfassung werden die festgelegten Datentypen, Pflichtfelder und Validierungsregeln geprüft.
 14. Ein neu angelegter Eintragstyp erscheint ohne Programmänderung im Wochenbericht. Zwei Buchungen mit 30 und 45 Minuten ergeben für dessen Zeitfeld 75 Minuten; eine Umbenennung des Typs verändert das Ergebnis nicht.
 15. Für ein Bewertungsfeld mit der Skala 1 bis 5 ergeben die Werte 3 und 5 sowie eine fehlende Bewertung den Durchschnitt 4,0 aus 2 Bewertungen. Ohne Bewertungen wird „Keine Daten“ angezeigt.
-16. chip-pippin kann Projekt „Zeiterfassung“, Eintragstyp „Mitarbeiter“ und Mitarbeitereintrag per API bei Bedarf erstellen; wiederholte Einrichtung erzeugt keine Duplikate.
-17. Für einen Mitarbeiter kann ohne Ticket ein Arbeitstag zunächst nur mit Arbeitsbeginn gespeichert werden. Anschließend lassen sich zwei Pausen jeweils schrittweise um Beginn und Ende sowie zuletzt das Arbeitsende ergänzen, ohne vorhandene Daten zu verlieren.
+16. chip-pippin kann Projekt „Zeiterfassung“, Eintragstyp „Mitarbeiter“ und Mitarbeiter-Ticket per API bei Bedarf erstellen; wiederholte Einrichtung erzeugt keine Duplikate.
+17. Am Mitarbeiter-Ticket kann ein Arbeitstag zunächst nur mit Arbeitsbeginn gespeichert werden. Anschließend lassen sich zwei Pausen jeweils schrittweise um Beginn und Ende sowie zuletzt das Arbeitsende ergänzen, ohne vorhandene Daten zu verlieren. Ein zusätzliches Aufgaben-Ticket ist nicht erforderlich.
 18. Eine berechtigte manuelle Korrektur in logUself ist beim nächsten API-Abruf durch die externe Anwendung sichtbar. Ein Update auf Basis einer veralteten Version wird als Konflikt zurückgewiesen.
+19. Zwei Sporterfassungen am selben Sport-Ticket werden im Wochenbericht als zwei Erfassungen und ein zugehöriges Ticket gezählt; ihre Dauern werden einmalig summiert.
 
 ## 6. Bewusst nicht in Version 1 enthalten
 
